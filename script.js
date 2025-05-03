@@ -15,7 +15,6 @@ window.addEventListener('load',
 function(e) {
   begin();
 }, false);
-//window.addEventListener('click',go);
 function go() {
 clearInterval(timer);
 timer=setInterval(change,0);
@@ -67,8 +66,6 @@ $("buffer").checked=buffer;
 $("safety").checked=safety;
 }
 function reboot() {
-//clearTimeout(timer);
-//clearInterval(timer);
 h=canvas.offsetHeight;
 w=canvas.offsetWidth;
 if (once==0) once=w/s+1;
@@ -77,7 +74,6 @@ p=0;
 x=0;
 }
 function afterpause() {
-//$("resize").value=Math.random();
 clearTimeout(timer);
 timer=setInterval(change,0);
 }
@@ -139,21 +135,9 @@ if (runonce) {clearInterval(timer);clearTimeout(timer);break;}
 }
 function pixel() {
 return eval("pixel"+i+"()");
-/*switch(i) {
-case 0:return pixel0();break;
-case 1:return pixel1();break;
-case 2:return pixel2();break;
-case 3:return pixel3();break;
-case 4:return pixel4();break;
-case 5:return pixel5();break;
-case 6:return pixel6();break;
-case 7:return pixel7();break;
-case 8:return pixel8();break;
-}*/
 }
 function pixel0() {
 var pixcol=(Math.random()*256*256*256*(1-x/w)+seed*256*256*256*(x/w));
-//pixcol=(x/w)*pixcol;
 return "rgb("+
 Math.floor(pixcol%256)+","+
 Math.floor(pixcol/256%256)+","+
@@ -203,10 +187,6 @@ var r=x/w*256;
 var g=(x/w+y/h)/2*256;
 var b=y/h*256;
 var pixcol=(r+g*256+b*256*256)*seed;
-//return "rgb("+
-//Math.floor(r)+","+
-//Math.floor(g)+","+
-//Math.floor(b)+")";
 return "rgb("+
 Math.floor(pixcol%256)+","+
 Math.floor(pixcol/256%256)+","+
@@ -223,7 +203,6 @@ Math.floor(pixcol/256/256)+")";
 }
 function pixel8() {
 var pixcol=(seed*256*256*256);
-//pixcol+=((Math.random()-0.5)*(y/h)*(pixcol/2))/100;
 var r=pixcol%256;
 var g=pixcol/256%256;
 var b=pixcol/256/256;
@@ -232,9 +211,6 @@ r=(r*(1-y/h)+Math.random()*256*(y/h));
 g=(g*(1-y/h)+Math.random()*256*(y/h));
 b=(b*(1-y/h)+Math.random()*256*(y/h));
 
-//r+=((Math.random()-0.5)*(y/h)*(r/2))
-//g+=((Math.random()-0.5)*(y/h)*(g/2))
-//b+=((Math.random()-0.5)*(y/h)*(b/2))
 return "rgb("+
 Math.floor(r)+","+
 Math.floor(g)+","+

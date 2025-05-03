@@ -120,19 +120,6 @@
 		safety=id.checked;
 	}
 	function setoptions(options) {
-		/*
-		$("rendermode").value=i;
-		$("pixelsize").value=s;
-		$("atonce").value=once;
-		$("seed").value=seed;
-		$("seedmode").value=seedMode;
-		$("delay").value=pauseby;
-		$("cycle").checked=!runonce;
-		$("repeat").checked=repeat;
-		$("buffer").checked=buffer;
-		$("safety").checked=safety;
-		*/
-		//runonce/repeat/buffer/safety/i/s/once/seedMode/seed/delay
 		var splitted=options.split(" ");
 		if (splitted[0] != "n") if (splitted[0] == "1") runonce=true;else runonce=false;
 		if (splitted[1] != "n") if (splitted[1] == "1") repeat=true;else repeat=false;
@@ -180,7 +167,6 @@
 <div style="position:fixed;width:100%;height:100%;background:#fff;z-index:-1"></div>
 <div id="junk" style="position:absolute;top:5px;left:5px;z-index:5">
 <input id='resize' type="button" value="Resize" onclick='resizeBox()' style="float:left" />
-																																																																																																														<!-- runonce/repeat/buffer/safety/i/s/once/seedMode/seed/delay -->
 <div id="presets">Preset Configurations<br />
 <a href="javascript:setoptions('0 0 0 1 n 5 5 0 n 1000')">default</a><br />
 <a href="javascript:setoptions('0 0 1 1 n 1 100000 0 n 1000')">full renders (cycle)</a><br />
