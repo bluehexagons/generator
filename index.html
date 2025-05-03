@@ -1,206 +1,380 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width">
-  <title>JavaScript Fun Rendering</title>
-  <link rel="stylesheet" href="style.css" />
-  <script type="text/javascript" src="script.js"></script>
-  <script type="text/javascript">
-	var resizing=0;
-	var progressE;
-	var progress;
-	var progging=false;
-	function initialize() {
-		progressE=$("progbar");
-		if ("\v"==="v") {
-			document.getElementById("isie").innerHTML="This code is not written to run on Internet Explorer,<br />and it is unlikely that anything will happen.<br />Please upgrade to a better browser.<br /><a href='http://www.google.com/chrome/intl/en/landing_chrome.html?hl=en'><img src='http://www.google.com/intl/en/images/logos/chrome_logo.gif' style='border:none' />Such as Google Chrome (recommended)</a> <a href='http://www.getfirefox.com/'>or Firefox</a>";
-		}
-	}
-	function stopRender() {
-		clearInterval(timer);
-		clearTimeout(timer);
-	}
-	function toggleProgress() {
-		if (!progging) {
-			progress=setInterval("updProgress()",100);
-			$("progbar").innerHTML="";
-			progging=true;
-			progressE.style.width="0px";
-		}else {
-			clearInterval(progress);
-			$("progbar").innerHTML="Show Progress";
-			progging=false;
-			progressE.style.width="0px";
-		}
-	}
-	function updProgress() {
-		progressE.style.width=(Math.floor(p/(w*h)*100))+"px";
-	}
-	function resizeBox() {
-		document.getElementById("resize").value="Click somewhere to resize to";
-		resizing=2;
-	}
-	function tryResize(e) {
-		if (resizing==1) {
-			var can=document.getElementById("can");
-			var can2=document.getElementById("can2");
-			can.style.display="";
-			can2.style.display="none";
-			bufferCan=true;
-			canvas=can;
-			ctx=canvas.getContext("2d");
-			var pos=findPos(can);
-			can.width=e.clientX-pos[0];
-			can.height=e.clientY-pos[1];
-			can.style.width=e.clientX-pos[0];
-			can.style.height=e.clientY-pos[1];
-			can2.width=e.clientX-pos[0];
-			can2.height=e.clientY-pos[1];
-			can2.style.width=e.clientX-pos[0];
-			can2.style.height=e.clientY-pos[1];
-			reboot();
-			document.getElementById("resize").value="Resize";
-		}
-		resizing-=1;
-	}
-	function changeSpeed(id,e) {
-		if (e.keyCode == 13) {
-			once=parseInt(id.value);
-		}
-	}
-	function changeSpeed(id,e) {
-		if (e.keyCode == 13) {
-			once=parseInt(id.value);
-		}
-	}
-	function changeSize(id,e) {
-		if (e.keyCode == 13) {
-			s=parseInt(id.value);
-		}
-	}
-	function changeMode(id,e) {
-		if (e.keyCode == 13) {
-			i=parseInt(id.value);
-		}
-	}
-	function changeSeed(id,e) {
-		if (e.keyCode == 13) {
-			seed=parseFloat(id.value);
-		}
-	}
-	function changeSeedMode(id,e) {
-		if (e.keyCode == 13) {
-			seedMode=parseFloat(id.value);
-			seedDir=0;
-		}
-	}
-	function changeDelay(id,e) {
-		if (e.keyCode == 13) {
-			pauseby=parseFloat(id.value);
-		}
-	}
-	function changeCycle(id,e) {
-		runonce=!id.checked;
-	}
-	function changeRepeat(id,e) {
-		repeat=id.checked;
-	}
-	function changeBuffer(id,e) {
-		buffer=id.checked;
-		var can=document.getElementById("can");
-		var can2=document.getElementById("can2");
-		can.style.display="";
-		can2.style.display="none";
-		bufferCan=true;
-		canvas=can;
-		ctx=canvas.getContext("2d");
-	}
-	function changeSafety(id,e) {
-		safety=id.checked;
-	}
-	function setoptions(options) {
-		var splitted=options.split(" ");
-		if (splitted[0] != "n") if (splitted[0] == "1") runonce=true;else runonce=false;
-		if (splitted[1] != "n") if (splitted[1] == "1") repeat=true;else repeat=false;
-		if (splitted[2] != "n") if (splitted[2] == "1") buffer=true;else buffer=false;
-		if (splitted[3] != "n") if (splitted[3] == "1") safety=true;else safety=false;
-		if (splitted[4] != "n") i=parseInt(splitted[4]);
-		if (splitted[5] != "n") s=parseInt(splitted[5]);
-		if (splitted[6] != "n") once=parseInt(splitted[6]);
-		if (splitted[7] != "n") seedMode=parseFloat(splitted[7]);
-		if (splitted[8] != "n") seed=parseFloat(splitted[8]);
-		if (splitted[9] != "n") pauseby=parseFloat(splitted[9]);
-		$("rendermode").value=i;
-		$("pixelsize").value=s;
-		$("atonce").value=once;
-		$("seed").value=seed;
-		$("seedmode").value=seedMode;
-		$("delay").value=pauseby;
-		$("cycle").checked=!runonce;
-		$("repeat").checked=repeat;
-		$("buffer").checked=buffer;
-		$("safety").checked=safety;
-		if (!buffer) {
-			var can=document.getElementById("can");
-			var can2=document.getElementById("can2");
-			can.style.display="";
-			can2.style.display="none";
-			bufferCan=true;
-			canvas=can;
-			ctx=canvas.getContext("2d");
-		}
-	}
-	function findPos(obj) { //http://www.quirksmode.org/js/findpos.html thanks for awesome script
-	var curleft = curtop = 0;
-	if (obj.offsetParent) {
-		do {
-			curleft += obj.offsetLeft;
-			curtop += obj.offsetTop;
-		} while (obj = obj.offsetParent);
-	}
-	return [curleft,curtop];
-}
-  </script>
-</head>
-<body onclick="tryResize(event)" onload="initialize()">
-<div style="position:fixed;width:100%;height:100%;background:#fff;z-index:-1"></div>
-<div id="junk" style="position:absolute;top:5px;left:5px;z-index:5">
-<input id='resize' type="button" value="Resize" onclick='resizeBox()' style="float:left" />
-<div id="presets">Preset Configurations<br />
-<a href="javascript:setoptions('0 0 0 1 n 5 5 0 n 1000')">default</a><br />
-<a href="javascript:setoptions('0 0 1 1 n 1 100000 0 n 1000')">full renders (cycle)</a><br />
-<a href="javascript:setoptions('0 1 1 1 n 1 100000 0 n 1000')">full renders (current)</a><br />
-<a href="javascript:setoptions('0 1 1 1 n 5 100000 1.0001 0.0 30')">animate current (low)</a><br />
-<a href="javascript:setoptions('0 1 1 1 n 1 100000 1.0005 0.0 0')">animate current (hq)</a><br />
-<a href="javascript:setoptions('0 1 1 1 4 5 100000 1.0001 0.0 0')">cool animation 1</a><br />
-<a href="javascript:setoptions('0 1 1 1 7 3 100000 1.002 0.0 0')">cool animation 2</a><br />
-<a href="javascript:setoptions('0 1 1 1 9 5 100000 1.05 0.0 30')">shiny gradient animation</a>
-</div>
-<div id="options">
-Options<br />
-speed<input id='atonce' type="text" value="1" onkeypress='changeSpeed(this,event)' onclick='changeSpeed(this,13)' title="speed; enter to submit (higher requires more procesing power and may freeze the browser)" style="width:30px" />
-size<input id='pixelsize' type="text" value="1" onkeypress='changeSize(this,event)' onclick='changeSize(this,13)' title="size of pixels; enter to submit" style="width:30px" />
-render<input id='rendermode' type="text" value="1" onkeypress='changeMode(this,event)' onclick='changeMode(this,13)' title="render mode; enter to submit (0-9)" style="width:30px" />
-cycle<input id='cycle' type="checkbox" value="cycle" onclick='changeCycle(this,event)' title="automatically cycle" style="width:30px" />
-repeat<input id='repeat' type="checkbox" value="cycle" onclick='changeRepeat(this,event)' title="repeat same render" style="width:30px" />
-<br /><br />
-</div>
-<div id="advanced">Advanced Options<br />
-delay<input id='delay' type="text" value="1" onkeypress='changeDelay(this,event)' onclick='changeDelay(this,13)' title="delay; enter to submit (in miliseconds)" style="width:30px" />
-seed<input id='seed' type="text" value="1" onkeypress='changeSeed(this,event)' onclick='changeSeed(this,13)' title="current seed (decimal between 0 and 1)" style="width:135px" />
-seedmode<input id='seedmode' type="text" value="1" onkeypress='changeSeedMode(this,event)' onclick='changeSeedMode(this,13)' title="seed mode; enter to submit (0 (random), 1.x (increment by 0.x), 2 (decrement by 0.x))" style="width:30px" />
-buffer<input id='buffer' type="checkbox" value="cycle" onclick='changeBuffer(this,event)' title="shows full renders instead of drawing the progress" style="width:30px" />
-safety<input id='safety' type="checkbox" value="cycle" onclick='changeSafety(this,event)' title="toggles safety features (freeze prevention)" style="width:30px" />
-<br /><br />
-</div>
-<input id='stop' type="button" value="Stop" onclick='stopRender()' style="float:left" />
-<div id="progress" onclick="toggleProgress()" style="display:inline-block;height:20px;width:102px;background:#000;color:#fff;;overflow:hidden;whitespace:no-wrap;border:1px solid #000"><div id="progbar" style="display:inline-block;height:20px;width:0px;background:#fff;color:#fff;margin:0px;float:left;overflow:visible;white-space:nowrap">Show Progress</div></div>
-<div id="debug" style="display:inline"></div>
-</div>
-<div style="height:40px"></div>
-  <canvas id='can' onclick='go()' width='200' height='250' style="position:absolute;top:40px;left:10px;border:1px solid #000" title="click to cycle renders"></canvas>
-  <canvas id='can2' onclick='go()' width='200' height='250' style="position:absolute;top:40px;left:10px;border:1px solid #000;display:none" title="click to cycle renders"></canvas>
-<div id="isie"></div>
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>JavaScript Fun Rendering</title>
+    <link rel="stylesheet" href="style.css" />
+    <script type="text/javascript" src="script.js"></script>
+    <script type="text/javascript">
+      var resizing = 0;
+      var progressE;
+      var progress;
+      var progging = false;
+      function initialize() {
+        progressE = $("progbar");
+        if ("\v" === "v") {
+          document.getElementById("isie").innerHTML =
+            "This code is not written to run on Internet Explorer,<br />and it is unlikely that anything will happen.<br />Please upgrade to a better browser.<br /><a href='http://www.google.com/chrome/intl/en/landing_chrome.html?hl=en'><img src='http://www.google.com/intl/en/images/logos/chrome_logo.gif' style='border:none' />Such as Google Chrome (recommended)</a> <a href='http://www.getfirefox.com/'>or Firefox</a>";
+        }
+      }
+      function stopRender() {
+        clearInterval(timer);
+        clearTimeout(timer);
+      }
+      function toggleProgress() {
+        if (!progging) {
+          progress = setInterval("updProgress()", 100);
+          $("progbar").innerHTML = "";
+          progging = true;
+          progressE.style.width = "0px";
+        } else {
+          clearInterval(progress);
+          $("progbar").innerHTML = "Show Progress";
+          progging = false;
+          progressE.style.width = "0px";
+        }
+      }
+      function updProgress() {
+        progressE.style.width = Math.floor((p / (w * h)) * 100) + "px";
+      }
+      function resizeBox() {
+        document.getElementById("resize").value =
+          "Click somewhere to resize to";
+        resizing = 2;
+      }
+      function tryResize(e) {
+        if (resizing == 1) {
+          var can = document.getElementById("can");
+          var can2 = document.getElementById("can2");
+          can.style.display = "";
+          can2.style.display = "none";
+          bufferCan = true;
+          canvas = can;
+          ctx = canvas.getContext("2d");
+          var pos = findPos(can);
+          can.width = e.clientX - pos[0];
+          can.height = e.clientY - pos[1];
+          can.style.width = e.clientX - pos[0];
+          can.style.height = e.clientY - pos[1];
+          can2.width = e.clientX - pos[0];
+          can2.height = e.clientY - pos[1];
+          can2.style.width = e.clientX - pos[0];
+          can2.style.height = e.clientY - pos[1];
+          reboot();
+          document.getElementById("resize").value = "Resize";
+        }
+        resizing -= 1;
+      }
+      function changeSpeed(id, e) {
+        if (e.keyCode == 13) {
+          once = parseInt(id.value);
+        }
+      }
+      function changeSpeed(id, e) {
+        if (e.keyCode == 13) {
+          once = parseInt(id.value);
+        }
+      }
+      function changeSize(id, e) {
+        if (e.keyCode == 13) {
+          s = parseInt(id.value);
+        }
+      }
+      function changeMode(id, e) {
+        if (e.keyCode == 13) {
+          i = parseInt(id.value);
+        }
+      }
+      function changeSeed(id, e) {
+        if (e.keyCode == 13) {
+          seed = parseFloat(id.value);
+        }
+      }
+      function changeSeedMode(id, e) {
+        if (e.keyCode == 13) {
+          seedMode = parseFloat(id.value);
+          seedDir = 0;
+        }
+      }
+      function changeDelay(id, e) {
+        if (e.keyCode == 13) {
+          pauseby = parseFloat(id.value);
+        }
+      }
+      function changeCycle(id, e) {
+        runonce = !id.checked;
+      }
+      function changeRepeat(id, e) {
+        repeat = id.checked;
+      }
+      function changeBuffer(id, e) {
+        buffer = id.checked;
+        var can = document.getElementById("can");
+        var can2 = document.getElementById("can2");
+        can.style.display = "";
+        can2.style.display = "none";
+        bufferCan = true;
+        canvas = can;
+        ctx = canvas.getContext("2d");
+      }
+      function changeSafety(id, e) {
+        safety = id.checked;
+      }
+      function setoptions(options) {
+        var splitted = options.split(" ");
+        if (splitted[0] != "n")
+          if (splitted[0] == "1") runonce = true;
+          else runonce = false;
+        if (splitted[1] != "n")
+          if (splitted[1] == "1") repeat = true;
+          else repeat = false;
+        if (splitted[2] != "n")
+          if (splitted[2] == "1") buffer = true;
+          else buffer = false;
+        if (splitted[3] != "n")
+          if (splitted[3] == "1") safety = true;
+          else safety = false;
+        if (splitted[4] != "n") i = parseInt(splitted[4]);
+        if (splitted[5] != "n") s = parseInt(splitted[5]);
+        if (splitted[6] != "n") once = parseInt(splitted[6]);
+        if (splitted[7] != "n") seedMode = parseFloat(splitted[7]);
+        if (splitted[8] != "n") seed = parseFloat(splitted[8]);
+        if (splitted[9] != "n") pauseby = parseFloat(splitted[9]);
+        $("rendermode").value = i;
+        $("pixelsize").value = s;
+        $("atonce").value = once;
+        $("seed").value = seed;
+        $("seedmode").value = seedMode;
+        $("delay").value = pauseby;
+        $("cycle").checked = !runonce;
+        $("repeat").checked = repeat;
+        $("buffer").checked = buffer;
+        $("safety").checked = safety;
+        if (!buffer) {
+          var can = document.getElementById("can");
+          var can2 = document.getElementById("can2");
+          can.style.display = "";
+          can2.style.display = "none";
+          bufferCan = true;
+          canvas = can;
+          ctx = canvas.getContext("2d");
+        }
+      }
+      function findPos(obj) {
+        //http://www.quirksmode.org/js/findpos.html thanks for awesome script
+        var curleft = (curtop = 0);
+        if (obj.offsetParent) {
+          do {
+            curleft += obj.offsetLeft;
+            curtop += obj.offsetTop;
+          } while ((obj = obj.offsetParent));
+        }
+        return [curleft, curtop];
+      }
+    </script>
+  </head>
+  <body onclick="tryResize(event)" onload="initialize()">
+    <div
+      style="
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        background: #fff;
+        z-index: -1;
+      "
+    ></div>
+    <div id="junk" style="position: absolute; top: 5px; left: 5px; z-index: 5">
+      <input
+        id="resize"
+        type="button"
+        value="Resize"
+        onclick="resizeBox()"
+        style="float: left"
+      />
+      <div id="presets">
+        Preset Configurations<br />
+        <a href="javascript:setoptions('0 0 0 1 n 5 5 0 n 1000')">default</a
+        ><br />
+        <a href="javascript:setoptions('0 0 1 1 n 1 100000 0 n 1000')"
+          >full renders (cycle)</a
+        ><br />
+        <a href="javascript:setoptions('0 1 1 1 n 1 100000 0 n 1000')"
+          >full renders (current)</a
+        ><br />
+        <a href="javascript:setoptions('0 1 1 1 n 5 100000 1.0001 0.0 30')"
+          >animate current (low)</a
+        ><br />
+        <a href="javascript:setoptions('0 1 1 1 n 1 100000 1.0005 0.0 0')"
+          >animate current (hq)</a
+        ><br />
+        <a href="javascript:setoptions('0 1 1 1 4 5 100000 1.0001 0.0 0')"
+          >cool animation 1</a
+        ><br />
+        <a href="javascript:setoptions('0 1 1 1 7 3 100000 1.002 0.0 0')"
+          >cool animation 2</a
+        ><br />
+        <a href="javascript:setoptions('0 1 1 1 9 5 100000 1.05 0.0 30')"
+          >shiny gradient animation</a
+        >
+      </div>
+      <div id="options">
+        Options<br />
+        speed<input
+          id="atonce"
+          type="text"
+          value="1"
+          onkeypress="changeSpeed(this,event)"
+          onclick="changeSpeed(this,13)"
+          title="speed; enter to submit (higher requires more procesing power and may freeze the browser)"
+          style="width: 30px"
+        />
+        size<input
+          id="pixelsize"
+          type="text"
+          value="1"
+          onkeypress="changeSize(this,event)"
+          onclick="changeSize(this,13)"
+          title="size of pixels; enter to submit"
+          style="width: 30px"
+        />
+        render<input
+          id="rendermode"
+          type="text"
+          value="1"
+          onkeypress="changeMode(this,event)"
+          onclick="changeMode(this,13)"
+          title="render mode; enter to submit (0-9)"
+          style="width: 30px"
+        />
+        cycle<input
+          id="cycle"
+          type="checkbox"
+          value="cycle"
+          onclick="changeCycle(this,event)"
+          title="automatically cycle"
+          style="width: 30px"
+        />
+        repeat<input
+          id="repeat"
+          type="checkbox"
+          value="cycle"
+          onclick="changeRepeat(this,event)"
+          title="repeat same render"
+          style="width: 30px"
+        />
+        <br /><br />
+      </div>
+      <div id="advanced">
+        Advanced Options<br />
+        delay<input
+          id="delay"
+          type="text"
+          value="1"
+          onkeypress="changeDelay(this,event)"
+          onclick="changeDelay(this,13)"
+          title="delay; enter to submit (in miliseconds)"
+          style="width: 30px"
+        />
+        seed<input
+          id="seed"
+          type="text"
+          value="1"
+          onkeypress="changeSeed(this,event)"
+          onclick="changeSeed(this,13)"
+          title="current seed (decimal between 0 and 1)"
+          style="width: 135px"
+        />
+        seedmode<input
+          id="seedmode"
+          type="text"
+          value="1"
+          onkeypress="changeSeedMode(this,event)"
+          onclick="changeSeedMode(this,13)"
+          title="seed mode; enter to submit (0 (random), 1.x (increment by 0.x), 2 (decrement by 0.x))"
+          style="width: 30px"
+        />
+        buffer<input
+          id="buffer"
+          type="checkbox"
+          value="cycle"
+          onclick="changeBuffer(this,event)"
+          title="shows full renders instead of drawing the progress"
+          style="width: 30px"
+        />
+        safety<input
+          id="safety"
+          type="checkbox"
+          value="cycle"
+          onclick="changeSafety(this,event)"
+          title="toggles safety features (freeze prevention)"
+          style="width: 30px"
+        />
+        <br /><br />
+      </div>
+      <input
+        id="stop"
+        type="button"
+        value="Stop"
+        onclick="stopRender()"
+        style="float: left"
+      />
+      <div
+        id="progress"
+        onclick="toggleProgress()"
+        style="
+          display: inline-block;
+          height: 20px;
+          width: 102px;
+          background: #000;
+          color: #fff;
+          overflow: hidden;
+          whitespace: no-wrap;
+          border: 1px solid #000;
+        "
+      >
+        <div
+          id="progbar"
+          style="
+            display: inline-block;
+            height: 20px;
+            width: 0px;
+            background: #fff;
+            color: #fff;
+            margin: 0px;
+            float: left;
+            overflow: visible;
+            white-space: nowrap;
+          "
+        >
+          Show Progress
+        </div>
+      </div>
+      <div id="debug" style="display: inline"></div>
+    </div>
+    <div style="height: 40px"></div>
+    <canvas
+      id="can"
+      onclick="go()"
+      width="200"
+      height="250"
+      style="position: absolute; top: 40px; left: 10px; border: 1px solid #000"
+      title="click to cycle renders"
+    ></canvas>
+    <canvas
+      id="can2"
+      onclick="go()"
+      width="200"
+      height="250"
+      style="
+        position: absolute;
+        top: 40px;
+        left: 10px;
+        border: 1px solid #000;
+        display: none;
+      "
+      title="click to cycle renders"
+    ></canvas>
+    <div id="isie"></div>
+  </body>
 </html>
