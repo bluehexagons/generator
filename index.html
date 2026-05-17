@@ -10,28 +10,31 @@
   <body>
     <canvas id="main" title="Click to randomize"></canvas>
 
-    <header class="hud top-left">
-      <div class="title">Plasma Generator</div>
-      <div id="mode-name" class="mode-name">—</div>
-      <div id="mode-note" class="mode-note">—</div>
-      <div class="seed-row">
-        <span class="label">seed</span>
-        <code id="seed-readout">—</code>
-        <input id="seed-input" type="text" placeholder="set 0–1" inputmode="decimal" />
-      </div>
-    </header>
+    <div class="top-bar">
+      <header class="hud top-left">
+        <div class="title">Plasma Generator</div>
+        <div id="mode-name" class="mode-name">—</div>
+        <div id="mode-note" class="mode-note">—</div>
+        <div class="seed-row">
+          <span class="label">seed</span>
+          <code id="seed-readout">—</code>
+          <input id="seed-input" type="text" placeholder="set 0–1" inputmode="decimal" />
+        </div>
+      </header>
 
-    <div class="hud top-right">
-      <button id="btn-prev" title="Previous mode (←)">‹</button>
-      <button id="btn-next" title="Next mode (→)">›</button>
-      <button id="btn-random" title="New seed (R)">Randomize</button>
-      <button id="btn-pause" title="Pause animation (Space)">Pause</button>
-      <button id="btn-cycle" title="Auto-cycle modes (C)">Cycle</button>
-      <button id="btn-save" title="Download PNG (S)">Save PNG</button>
-      <button id="btn-share" title="Copy deep link">Copy link</button>
+      <div class="hud top-right">
+        <button id="btn-prev" title="Previous mode (←)">‹</button>
+        <button id="btn-next" title="Next mode (→)">›</button>
+        <button id="btn-random" title="New seed (R)">Randomize</button>
+        <button id="btn-pause" title="Pause animation (Space)">Pause</button>
+        <button id="btn-cycle" title="Auto-cycle modes (C)">Cycle</button>
+        <button id="btn-save" title="Download PNG (S)">Save PNG</button>
+        <button id="btn-share" title="Copy deep link">Copy link</button>
+        <button id="btn-settings" title="Toggle controls">⚙</button>
+      </div>
     </div>
 
-    <aside class="hud right">
+    <aside class="hud right" id="panel-right">
       <div class="control">
         <label for="pixel-size">Pixel size <span id="pixel-size-out">1</span></label>
         <input id="pixel-size" type="range" min="1" max="40" step="1" />

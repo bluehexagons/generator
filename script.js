@@ -325,6 +325,10 @@ function wireUi() {
     seedInput.value = "";
   });
 
+  document.getElementById("btn-settings").addEventListener("click", () => {
+    document.getElementById("panel-right").classList.toggle("open");
+  });
+
   main.addEventListener("click", randomizeSeed);
 
   window.addEventListener("keydown", e => {
