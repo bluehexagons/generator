@@ -6,6 +6,7 @@
   --fg-dim: rgba(243, 244, 246, 0.65);
   --accent: #7dd3fc;
   --accent-strong: #38bdf8;
+  --focus: #fbbf24;
 }
 
 * { box-sizing: border-box; }
@@ -18,6 +19,15 @@ html, body {
   color: var(--fg);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   overflow: hidden;
+  user-select: none;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 42%, rgba(2, 4, 8, 0.34) 100%), linear-gradient(180deg, rgba(0,0,0,.18), transparent 24%, transparent 76%, rgba(0,0,0,.22));
 }
 
 #main {
@@ -27,19 +37,20 @@ html, body {
   height: 100vh;
   display: block;
   cursor: crosshair;
+  z-index: 0;
 }
 
 .hud {
-  background: var(--panel);
+  background: linear-gradient(135deg, rgba(22, 26, 33, 0.86), rgba(11, 14, 19, 0.76));
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid var(--panel-border);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   padding: 12px 14px;
   font-size: 13px;
   line-height: 1.4;
   color: var(--fg);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.38), 0 1px 0 rgba(255,255,255,.06) inset;
 }
 
 .top-bar {
@@ -57,7 +68,11 @@ html, body {
 .top-bar > * { pointer-events: auto; }
 
 .top-left { max-width: 320px; }
-.top-right { display: flex; gap: 6px; flex-wrap: wrap; max-width: 60vw; justify-content: flex-end; }
+.top-right { display: flex; gap: 8px; flex-wrap: wrap; max-width: 70vw; justify-content: flex-end; align-items: center; }
+.button-group { display: flex; gap: 3px; padding: 3px; border: 1px solid rgba(255,255,255,.07); border-radius: 9px; background: rgba(0,0,0,.16); }
+.button-group button { border-color: transparent; }
+.mode-nav button { font-size: 20px; line-height: 16px; padding: 5px 9px; }
+.utility-actions { background: transparent; border-color: transparent; padding: 0; }
 .right { position: fixed; top: 96px; right: 16px; width: 260px; z-index: 10; }
 .bottom {
   position: fixed;
@@ -69,6 +84,8 @@ html, body {
   padding: 8px;
   max-width: calc(100vw - 32px);
   overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,.25) transparent;
   z-index: 10;
 }
 
@@ -82,9 +99,25 @@ html, body {
   color: var(--fg-dim);
   margin-bottom: 2px;
 }
+.title-mark {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin: 0 7px 1px 0;
+  border-radius: 50%;
+  background: var(--accent-strong);
+  box-shadow: 0 0 12px var(--accent-strong);
+}
+.mode-line { display: flex; align-items: baseline; gap: 10px; }
 .mode-name {
   font-size: 20px;
   font-weight: 600;
+}
+.mode-count {
+  color: var(--accent);
+  font: 600 10px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .08em;
+  opacity: .8;
 }
 .mode-note {
   font-size: 12px;
@@ -118,6 +151,7 @@ html, body {
   border: 1px solid var(--panel-border);
   border-radius: 6px;
   padding: 4px 6px;
+  user-select: text;
 }
 
 button {
@@ -129,17 +163,41 @@ button {
   font-size: 12px;
   font-family: inherit;
   cursor: pointer;
-  transition: background 0.12s, border-color 0.12s, color 0.12s;
+  transition: background 0.16s, border-color 0.16s, color 0.16s, box-shadow 0.16s, transform 0.16s;
+  white-space: nowrap;
 }
 button:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(125, 211, 252, 0.13);
+  border-color: rgba(125, 211, 252, 0.38);
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.12);
 }
+button:focus-visible, input:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+button:active { transform: translateY(1px); }
 button.on {
   background: var(--accent-strong);
   color: #07212d;
   border-color: var(--accent-strong);
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.32);
 }
+.button-icon { display: inline-block; margin-right: 5px; color: var(--accent); font-size: 14px; line-height: 0; vertical-align: -1px; }
+button.on .button-icon { color: inherit; }
+
+.panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  color: var(--fg);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+.panel-live { color: var(--fg-dim); font-size: 9px; letter-spacing: .08em; }
+.panel-live i { display: inline-block; width: 5px; height: 5px; margin-right: 4px; border-radius: 50%; background: #86efac; box-shadow: 0 0 8px #86efac; }
 
 .control {
   margin-bottom: 12px;
@@ -162,7 +220,21 @@ button.on {
 .control input[type="range"] {
   width: 100%;
   accent-color: var(--accent-strong);
+  height: 5px;
+  cursor: ew-resize;
 }
+.control select {
+  width: 100%;
+  appearance: none;
+  color: var(--fg);
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font: inherit;
+  cursor: pointer;
+}
+.control select option { background: #161a20; color: var(--fg); }
 
 .hint {
   font-size: 11px;
@@ -191,14 +263,18 @@ kbd {
   border: 1px solid var(--panel-border);
   border-radius: 8px;
   cursor: pointer;
+  overflow: hidden;
+  transition: border-color .18s, background .18s, transform .18s, box-shadow .18s;
 }
-.thumb:hover { border-color: rgba(255, 255, 255, 0.25); }
+.thumb:hover { border-color: rgba(125, 211, 252, 0.48); background: rgba(125, 211, 252, .06); transform: translateY(-2px); }
 .thumb canvas {
   display: block;
   border-radius: 4px;
   width: 96px;
   height: 64px;
+  transition: transform .28s, filter .28s;
 }
+.thumb:hover canvas { transform: scale(1.04); filter: saturate(1.15) contrast(1.05); }
 .thumb span {
   font-size: 10px;
   color: var(--fg-dim);
@@ -207,8 +283,13 @@ kbd {
 .thumb.active {
   border-color: var(--accent-strong);
   box-shadow: 0 0 0 1px var(--accent-strong) inset;
+  background: linear-gradient(180deg, rgba(56,189,248,.13), rgba(56,189,248,.03));
 }
 .thumb.active span { color: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  button, .thumb, .thumb canvas { transition: none; }
+}
 
 @media (max-width: 720px) {
   .top-bar {
@@ -228,4 +309,8 @@ kbd {
   .right.open { display: block; }
   .right .hint { display: none; }
   #btn-settings { display: inline-flex; align-items: center; justify-content: center; }
+  .bottom { bottom: 10px; max-width: calc(100vw - 20px); }
+  .thumb canvas { width: 76px; height: 50px; }
+  .top-bar { top: 10px; left: 10px; right: 10px; }
+  .hud { padding: 10px 12px; }
 }

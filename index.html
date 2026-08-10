@@ -5,36 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Plasma Generator</title>
     <link rel="stylesheet" href="style.css" />
-    <script type="text/javascript" src="script.js" defer></script>
+    <script type="module" src="script.js"></script>
   </head>
   <body>
-    <canvas id="main" title="Click to randomize"></canvas>
+    <canvas id="main" title="Click to randomize" aria-label="Animated plasma artwork"></canvas>
 
     <div class="top-bar">
       <header class="hud top-left">
-        <div class="title">Plasma Generator</div>
-        <div id="mode-name" class="mode-name">—</div>
+        <div class="title"><span class="title-mark" aria-hidden="true"></span>Plasma Generator</div>
+        <div class="mode-line">
+          <div id="mode-name" class="mode-name" aria-live="polite">—</div>
+          <span id="mode-count" class="mode-count">— / —</span>
+        </div>
         <div id="mode-note" class="mode-note">—</div>
         <div class="seed-row">
           <span class="label">seed</span>
           <code id="seed-readout">—</code>
-          <input id="seed-input" type="text" placeholder="set 0–1" inputmode="decimal" />
+          <input id="seed-input" type="text" aria-label="Set seed between 0 and 1" placeholder="set 0–1" inputmode="decimal" />
         </div>
       </header>
 
       <div class="hud top-right">
-        <button id="btn-prev" title="Previous mode (←)">‹</button>
-        <button id="btn-next" title="Next mode (→)">›</button>
-        <button id="btn-random" title="New seed (R)">Randomize</button>
-        <button id="btn-pause" title="Pause animation (Space)">Pause</button>
-        <button id="btn-cycle" title="Auto-cycle modes (C)">Cycle</button>
-        <button id="btn-save" title="Download PNG (S)">Save PNG</button>
-        <button id="btn-share" title="Copy deep link">Copy link</button>
-        <button id="btn-settings" title="Toggle controls">⚙</button>
+        <div class="button-group mode-nav" aria-label="Mode navigation">
+          <button id="btn-prev" class="icon-button" aria-label="Previous mode" title="Previous mode (←)">‹</button>
+          <button id="btn-next" class="icon-button" aria-label="Next mode" title="Next mode (→)">›</button>
+        </div>
+        <div class="button-group">
+          <button id="btn-random" title="New seed (R)"><span class="button-icon" aria-hidden="true">✦</span><span class="button-label">Randomize</span></button>
+          <button id="btn-pause" title="Pause animation (Space)"><span class="button-icon" aria-hidden="true">Ⅱ</span><span class="button-label">Pause</span></button>
+          <button id="btn-cycle" title="Auto-cycle modes (C)"><span class="button-icon" aria-hidden="true">↻</span><span class="button-label">Cycle</span></button>
+        </div>
+        <div class="button-group utility-actions">
+          <button id="btn-save" title="Download PNG (S)"><span class="button-icon" aria-hidden="true">↓</span><span class="button-label">Save PNG</span></button>
+          <button id="btn-share" title="Copy deep link"><span class="button-icon" aria-hidden="true">↗</span><span class="button-label">Copy link</span></button>
+        </div>
+        <button id="btn-settings" aria-label="Toggle controls" title="Toggle controls">⚙</button>
       </div>
     </div>
 
     <aside class="hud right" id="panel-right">
+      <div class="panel-heading"><span>Adjustments</span><span class="panel-live"><i></i> live</span></div>
       <div class="control">
         <label for="pixel-size">Pixel size <span id="pixel-size-out">1</span></label>
         <input id="pixel-size" type="range" min="1" max="40" step="1" />
@@ -43,12 +53,17 @@
         <label for="drift">Animate seed <span id="drift-out">off</span></label>
         <input id="drift" type="range" min="-100" max="100" step="1" />
       </div>
+      <div class="control">
+        <label for="palette">Palette</label>
+        <select id="palette" aria-label="Color palette"></select>
+      </div>
       <div class="hint">
         Keys: <kbd>←</kbd>/<kbd>→</kbd> mode · <kbd>0</kbd>–<kbd>9</kbd> jump ·
-        <kbd>R</kbd> seed · <kbd>Space</kbd> pause · <kbd>C</kbd> cycle · <kbd>S</kbd> save
+        <kbd>R</kbd> seed · <kbd>Space</kbd> pause · <kbd>C</kbd> cycle · <kbd>S</kbd> save.
+        Click the artwork to reseed it.
       </div>
     </aside>
 
-    <nav id="gallery" class="hud bottom" aria-label="render modes"></nav>
+    <nav id="gallery" class="hud bottom" aria-label="Render modes"></nav>
   </body>
 </html>
