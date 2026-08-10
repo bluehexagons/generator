@@ -10,6 +10,8 @@ The expanded collection includes several familiar plasma approaches: layered sin
 
 Serve the directory with any static server and open `index.html` (for example, `python3 -m http.server`). There is no build step; the small ES modules are loaded directly by the browser.
 
+Run the module tests with `npm test`.
+
 ## Source layout
 
 - `algorithms.js` — self-contained mode definitions, palettes, deterministic noise helpers, and pixel generators
@@ -28,4 +30,4 @@ Serve the directory with any static server and open `index.html` (for example, `
 - "Pixel size" slider — chunky-pixel mode
 - "Animate seed" slider — drift the seed each frame (positive or negative)
 - "Palette" — recolor the newer procedural generators
-- "Copy link" — shareable URL encoding the current mode/seed/size
+- "Copy link" — shareable URL encoding the current mode/seed/size/palette

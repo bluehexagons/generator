@@ -43,10 +43,19 @@ function scheduleRender() {
 }
 
 // ---------------- animation loop ----------------
+let animationFrameId = 0;
 let lastFrame = 0;
+
+function ensureAnimationLoop(resetClock = false) {
+  if (!animationFrameId && state.running && (state.drift !== 0 || state.cycleMs > 0)) {
+    if (resetClock) lastFrame = 0;
+    animationFrameId = requestAnimationFrame(loop);
+  }
+}
+
 function loop(t) {
-  requestAnimationFrame(loop);
-  if (!state.running) { lastFrame = t; return; }
+  animationFrameId = 0;
+  if (!state.running) return;
   const dt = lastFrame ? (t - lastFrame) : 16;
   lastFrame = t;
 
@@ -69,6 +78,7 @@ function loop(t) {
     }
   }
   if (dirty) scheduleRender();
+  ensureAnimationLoop();
 }
 
 // ---------------- HUD / controls ----------------
@@ -157,10 +167,18 @@ function wireUi() {
 
   const saveBtn = document.getElementById("btn-save");
   saveBtn.addEventListener("click", () => {
-    const a = document.createElement("a");
-    a.download = `plasma-mode${state.mode}-seed${state.seed.toFixed(4)}.png`;
-    a.href = main.toDataURL("image/png");
-    a.click();
+    main.toBlob(blob => {
+      if (!blob) return;
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.download = `plasma-mode${state.mode}-seed${state.seed.toFixed(4)}.png`;
+      a.href = url;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+    }, "image/png");
   });
 
   const shareBtn = document.getElementById("btn-share");
@@ -181,9 +199,12 @@ function wireUi() {
   pauseBtn.setAttribute("aria-pressed", "false");
   pauseBtn.addEventListener("click", () => {
     state.running = !state.running;
+    lastFrame = 0;
+    state.lastCycle = 0;
     pauseBtn.querySelector(".button-label").textContent = state.running ? "Pause" : "Play";
     pauseBtn.setAttribute("aria-pressed", String(!state.running));
     pauseBtn.querySelector(".button-icon").textContent = state.running ? "Ⅱ" : "▶";
+    ensureAnimationLoop(true);
   });
 
   const cycleBtn = document.getElementById("btn-cycle");
@@ -193,6 +214,7 @@ function wireUi() {
     state.lastCycle = 0;
     cycleBtn.classList.toggle("on", state.cycleMs > 0);
     cycleBtn.setAttribute("aria-pressed", String(state.cycleMs > 0));
+    ensureAnimationLoop(true);
   });
 
   const sizeSlider = document.getElementById("pixel-size");
@@ -218,6 +240,7 @@ function wireUi() {
     const mag = Math.abs(raw) / 100;
     state.drift = sign * mag * mag * 0.02;
     driftOut.textContent = fmtDrift(state.drift);
+    ensureAnimationLoop(true);
   });
 
   paletteSelect = document.getElementById("palette");
@@ -275,5 +298,4 @@ window.addEventListener("DOMContentLoaded", () => {
   wireUi();
   buildGallery();
   fitMain();
-  requestAnimationFrame(loop);
 });
