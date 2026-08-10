@@ -1,24 +1,32 @@
-export function writeHash(location, state) {
+export function writeHash({ location, history }, state) {
   const hash = `#mode=${state.mode}&seed=${state.seed.toFixed(6)}&size=${state.pixelSize}&palette=${state.palette}`;
   if (location.hash !== hash) history.replaceState(null, "", hash);
+}
+
+function readNumber(params, name) {
+  if (!params.has(name)) return null;
+  const raw = params.get(name);
+  if (raw.trim() === "") return null;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : null;
+}
+
+function clampInteger(value, min, max) {
+  return Math.max(min, Math.min(max, Math.trunc(value)));
 }
 
 export function readHash(location, state, modeCount, paletteCount) {
   const hash = location.hash.replace(/^#/, "");
   if (!hash) return;
 
-  const params = Object.fromEntries(hash.split("&").map(part => part.split("=")));
-  if (params.mode != null && Number.isFinite(+params.mode)) {
-    state.mode = Math.max(0, Math.min(modeCount - 1, +params.mode | 0));
-  }
-  if (params.seed != null) {
-    const seed = parseFloat(params.seed);
-    if (Number.isFinite(seed)) state.seed = ((seed % 1) + 1) % 1;
-  }
-  if (params.size != null && Number.isFinite(+params.size)) {
-    state.pixelSize = Math.max(1, Math.min(40, +params.size | 0));
-  }
-  if (params.palette != null && Number.isFinite(+params.palette)) {
-    state.palette = Math.max(0, Math.min(paletteCount - 1, +params.palette | 0));
-  }
+  const params = new URLSearchParams(hash);
+  const mode = readNumber(params, "mode");
+  const seed = readNumber(params, "seed");
+  const size = readNumber(params, "size");
+  const palette = readNumber(params, "palette");
+
+  if (mode !== null) state.mode = clampInteger(mode, 0, modeCount - 1);
+  if (seed !== null) state.seed = ((seed % 1) + 1) % 1;
+  if (size !== null) state.pixelSize = clampInteger(size, 1, 40);
+  if (palette !== null) state.palette = clampInteger(palette, 0, paletteCount - 1);
 }
