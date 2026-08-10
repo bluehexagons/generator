@@ -9,7 +9,7 @@ const samples = [
   [95, 63, 96, 64, 0.99, 6047],
 ];
 
-test("all render modes return deterministic RGB bytes", () => {
+test("all render modes return deterministic packed RGB colors", () => {
   assert.equal(MODES.length, 20);
 
   for (const mode of MODES) {
@@ -18,11 +18,8 @@ test("all render modes return deterministic RGB bytes", () => {
       const second = mode.generatePixel(x, y, width, height, seed, pixelIndex, 0);
 
       assert.deepEqual(first, second, `${mode.name} should be deterministic`);
-      assert.equal(first.length, 3, `${mode.name} should return RGB`);
-      for (const channel of first) {
-        assert.equal(Number.isInteger(channel), true, `${mode.name} should return integer channels`);
-        assert.ok(channel >= 0 && channel <= 255, `${mode.name} returned an invalid channel`);
-      }
+      assert.equal(Number.isInteger(first), true, `${mode.name} should return an integer color`);
+      assert.ok(first >= 0 && first <= 0xffffff, `${mode.name} returned an invalid color`);
     }
   }
 });
@@ -31,4 +28,25 @@ test("palette definitions have stable, unique names", () => {
   const names = PALETTES.map(palette => palette.name);
   assert.equal(new Set(names).size, names.length);
   assert.ok(names.length > 0);
+});
+
+test("prepared generators preserve their unprepared output", () => {
+  const width = 137;
+  const height = 83;
+  const seed = 0.42;
+  const samplesToCheck = [
+    [0, 0], [1, 1], [17, 9], [68, 41], [136, 82],
+  ];
+
+  for (const mode of MODES) {
+    if (!mode.preparePixel) continue;
+    const prepared = mode.preparePixel(width, height, seed, 2);
+    for (const [x, y] of samplesToCheck) {
+      assert.equal(
+        prepared(x, y, width, height, seed, y * width + x, 2),
+        mode.generatePixel(x, y, width, height, seed, y * width + x, 2),
+        `${mode.name} prepared output should match its generator`,
+      );
+    }
+  }
 });

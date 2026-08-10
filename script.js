@@ -116,13 +116,12 @@ function randomizeSeed() { setSeed(Math.random()); }
 
 // ---------------- gallery ----------------
 const gallery = document.getElementById("gallery");
-const galleryCanvases = [];
+const galleryContexts = [];
 const THUMB_WIDTH = 96;
 const THUMB_HEIGHT = 64;
 
 function renderGallery() {
-  galleryCanvases.forEach((canvas, index) => {
-    const context = canvas.getContext("2d", { alpha: false });
+  galleryContexts.forEach((context, index) => {
     const seed = 0.42 + index * 0.05;
     renderTo(context, THUMB_WIDTH, THUMB_HEIGHT, MODES[index], seed, 1, state.palette);
   });
@@ -140,7 +139,7 @@ function buildGallery() {
     const c = document.createElement("canvas");
     c.width = THUMB_WIDTH;
     c.height = THUMB_HEIGHT;
-    galleryCanvases.push(c);
+    galleryContexts.push(c.getContext("2d", { alpha: false }));
     const lbl = document.createElement("span");
     lbl.textContent = `${idx}. ${m.name}`;
     wrap.appendChild(c);
@@ -282,11 +281,12 @@ function wireUi() {
 
   window.addEventListener("resize", fitMain);
   window.addEventListener("hashchange", () => {
+    const previousPalette = state.palette;
     readHash(location, state, MODES.length, PALETTES.length);
     paletteSelect.value = state.palette;
     sizeSlider.value = state.pixelSize;
     sizeOut.textContent = state.pixelSize;
-    renderGallery();
+    if (state.palette !== previousPalette) renderGallery();
     scheduleRender();
     updateGallerySelection();
   });
