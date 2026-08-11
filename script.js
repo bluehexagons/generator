@@ -1,8 +1,11 @@
 "use strict";
 
 import { renderTo } from "./renderer.js";
-import { readHash, writeHash } from "./url-state.js";
+import { normalizeSeed, PIXEL_SIZE_MAX, PIXEL_SIZE_MIN, readHash, writeHash } from "./url-state.js";
 import { MODES, PALETTES } from "./algorithms.js";
+
+const MAX_DEVICE_PIXEL_RATIO = 2;
+const DEFAULT_CYCLE_MS = 4000;
 
 // ---------------- state ----------------
 const state = {
@@ -20,7 +23,7 @@ const main = document.getElementById("main");
 const mainCtx = main.getContext("2d", { alpha: false });
 
 function fitMain() {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const dpr = Math.min(window.devicePixelRatio || 1, MAX_DEVICE_PIXEL_RATIO);
   const cssW = window.innerWidth;
   const cssH = window.innerHeight;
   // Render at device resolution; pixel-size still controls visible chunkiness.
@@ -108,7 +111,7 @@ function setPalette(p) {
   scheduleRender();
 }
 function setSeed(s) {
-  state.seed = ((s % 1) + 1) % 1;
+  state.seed = normalizeSeed(s);
   writeHash(window, state);
   scheduleRender();
 }
@@ -157,6 +160,22 @@ function updateGallerySelection() {
   }
 }
 
+function syncPlaybackControls() {
+  const pauseBtn = document.getElementById("btn-pause");
+  const cycleBtn = document.getElementById("btn-cycle");
+  const paused = !state.running;
+  const cycling = state.cycleMs > 0;
+
+  pauseBtn.querySelector(".button-label").textContent = paused ? "Play" : "Pause";
+  pauseBtn.querySelector(".button-icon").textContent = paused ? "▶" : "Ⅱ";
+  pauseBtn.setAttribute("aria-pressed", String(paused));
+  pauseBtn.title = paused ? "Play animation (Space)" : "Pause animation (Space)";
+
+  cycleBtn.classList.toggle("on", cycling);
+  cycleBtn.setAttribute("aria-pressed", String(cycling));
+  cycleBtn.title = cycling ? "Stop cycling modes (C)" : "Auto-cycle modes (C)";
+}
+
 // ---------------- wiring ----------------
 let paletteSelect;
 function wireUi() {
@@ -176,7 +195,8 @@ function wireUi() {
       document.body.appendChild(a);
       a.click();
       a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 0);
+      // Give the browser time to start the download before releasing the URL.
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     }, "image/png");
   });
 
@@ -195,29 +215,26 @@ function wireUi() {
   });
 
   const pauseBtn = document.getElementById("btn-pause");
-  pauseBtn.setAttribute("aria-pressed", "false");
   pauseBtn.addEventListener("click", () => {
     state.running = !state.running;
     lastFrame = 0;
     state.lastCycle = 0;
-    pauseBtn.querySelector(".button-label").textContent = state.running ? "Pause" : "Play";
-    pauseBtn.setAttribute("aria-pressed", String(!state.running));
-    pauseBtn.querySelector(".button-icon").textContent = state.running ? "Ⅱ" : "▶";
+    syncPlaybackControls();
     ensureAnimationLoop(true);
   });
 
   const cycleBtn = document.getElementById("btn-cycle");
-  cycleBtn.setAttribute("aria-pressed", "false");
   cycleBtn.addEventListener("click", () => {
-    state.cycleMs = state.cycleMs > 0 ? 0 : 4000;
+    state.cycleMs = state.cycleMs > 0 ? 0 : DEFAULT_CYCLE_MS;
     state.lastCycle = 0;
-    cycleBtn.classList.toggle("on", state.cycleMs > 0);
-    cycleBtn.setAttribute("aria-pressed", String(state.cycleMs > 0));
+    syncPlaybackControls();
     ensureAnimationLoop(true);
   });
 
   const sizeSlider = document.getElementById("pixel-size");
   const sizeOut = document.getElementById("pixel-size-out");
+  sizeSlider.min = PIXEL_SIZE_MIN;
+  sizeSlider.max = PIXEL_SIZE_MAX;
   sizeSlider.value = state.pixelSize;
   sizeOut.textContent = state.pixelSize;
   sizeSlider.addEventListener("input", () => {
@@ -251,11 +268,12 @@ function wireUi() {
   });
   paletteSelect.value = state.palette;
   paletteSelect.addEventListener("change", () => setPalette(+paletteSelect.value));
+  syncPlaybackControls();
 
   const seedInput = document.getElementById("seed-input");
   seedInput.addEventListener("change", () => {
     const v = parseFloat(seedInput.value);
-    if (Number.isFinite(v)) setSeed(((v % 1) + 1) % 1);
+    if (Number.isFinite(v)) setSeed(normalizeSeed(v));
     seedInput.value = "";
   });
 

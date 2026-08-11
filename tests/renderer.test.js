@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { MODES, PALETTES } from "../algorithms.js";
 import { renderTo } from "../renderer.js";
 
 test("renderTo fills every pixel, including partial pixel blocks", () => {
@@ -42,4 +43,51 @@ test("renderTo fills every pixel, including partial pixel blocks", () => {
     generatePixel: () => 0x010203,
   }, 0, 1, 0);
   assert.equal(imageAllocations, 2, "resizing should allocate a new ImageData buffer");
+});
+
+test("renderTo prepares a generator once per frame", () => {
+  let prepareCalls = 0;
+  let pixelCalls = 0;
+  const ctx = {
+    createImageData(width, height) {
+      return { data: new Uint8ClampedArray(width * height * 4) };
+    },
+    putImageData() {},
+  };
+
+  renderTo(ctx, 4, 3, {
+    generatePixel: () => { throw new Error("unprepared generator should not run"); },
+    preparePixel(width, height, seed, palette) {
+      prepareCalls++;
+      assert.deepEqual([width, height, seed, palette], [4, 3, 0.25, 2]);
+      return (x, y) => {
+        pixelCalls++;
+        return x | (y << 8);
+      };
+    },
+  }, 0.25, 1, 2);
+
+  assert.equal(prepareCalls, 1);
+  assert.equal(pixelCalls, 12);
+});
+
+test("renderTo can render every mode and palette", () => {
+  let renderedFrames = 0;
+  const ctx = {
+    createImageData(width, height) {
+      return { data: new Uint8ClampedArray(width * height * 4) };
+    },
+    putImageData(image) {
+      assert.equal(image.data.length, 17 * 11 * 4);
+      renderedFrames++;
+    },
+  };
+
+  for (let palette = 0; palette < PALETTES.length; palette++) {
+    for (const mode of MODES) {
+      renderTo(ctx, 17, 11, mode, 0.42, 3, palette);
+    }
+  }
+
+  assert.equal(renderedFrames, MODES.length * PALETTES.length);
 });

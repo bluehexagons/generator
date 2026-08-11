@@ -12,6 +12,10 @@ Serve the directory with any static server and open `index.html` (for example, `
 
 Run the module tests with `npm test`.
 
+The browser app has no third-party dependencies; Node 18.18 or newer is required for the module test runner.
+
+Run the syntax and test checks together with `npm run check && npm test`.
+
 ## Source layout
 
 - `algorithms.js` — self-contained mode definitions, palettes, deterministic noise helpers, and pixel generators

@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { readHash, writeHash } from "../url-state.js";
+import { normalizeSeed, PIXEL_SIZE_MAX, PIXEL_SIZE_MIN, readHash, writeHash } from "../url-state.js";
+
+test("normalizeSeed wraps values into the shareable unit interval", () => {
+  assert.equal(normalizeSeed(0.25), 0.25);
+  assert.equal(normalizeSeed(-0.25), 0.75);
+  assert.equal(normalizeSeed(2.25), 0.25);
+});
 
 test("writeHash serializes the shareable state", () => {
   const location = { hash: "" };
@@ -17,7 +23,13 @@ test("readHash validates and clamps values from a deep link", () => {
   const state = { mode: 0, seed: 0.5, pixelSize: 1, palette: 0 };
   readHash({ hash: "#mode=999&seed=-0.25&size=999&palette=-2" }, state, 20, 5);
 
-  assert.deepEqual(state, { mode: 19, seed: 0.75, pixelSize: 40, palette: 0 });
+  assert.deepEqual(state, { mode: 19, seed: 0.75, pixelSize: PIXEL_SIZE_MAX, palette: 0 });
+});
+
+test("readHash keeps the documented pixel-size bounds", () => {
+  const state = { mode: 0, seed: 0.5, pixelSize: 8, palette: 0 };
+  readHash({ hash: "#size=" + (PIXEL_SIZE_MIN - 1) }, state, 20, 5);
+  assert.equal(state.pixelSize, PIXEL_SIZE_MIN);
 });
 
 test("readHash ignores malformed values", () => {

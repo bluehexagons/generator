@@ -1,7 +1,15 @@
 {
+  "name": "plasma-generator",
+  "version": "1.0.0",
+  "description": "A dependency-free, deterministic plasma image generator for the browser.",
   "private": true,
+  "license": "Apache-2.0",
   "type": "module",
+  "engines": {
+    "node": ">=18.18"
+  },
   "scripts": {
+    "check": "node --check algorithms.js && node --check renderer.js && node --check url-state.js && node --check script.js",
     "test": "node --test"
   }
 }
