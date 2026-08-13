@@ -9,7 +9,7 @@
     "node": ">=18.18"
   },
   "scripts": {
-    "check": "node --check algorithms.js && node --check renderer.js && node --check url-state.js && node --check script.js",
+    "check": "node --check algorithms.js && node --check renderer.js && node --check url-state.js && node --check app-state.js && node --check playback.js && node --check ui.js && node --check script.js",
     "test": "node --test"
   }
 }

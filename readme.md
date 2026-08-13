@@ -39,7 +39,10 @@ Animation renders at a slightly coarser resolution when a high-density display w
 
 ## Files
 
-- `algorithms.js` contains the scenes, palettes, noise helpers, and pixel functions.
-- `renderer.js` writes the pixels into a reusable `ImageData` buffer.
-- `url-state.js` reads and writes the shareable hash.
-- `script.js` owns playback, controls, gestures, and the gallery.
+- `algorithms.js` contains scene metadata, palettes, noise helpers, and pixel functions.
+- `renderer.js` writes pixels through the shared scene-preparation contract into a reusable `ImageData` buffer.
+- `app-state.js` contains pure state transitions and playback calculations.
+- `playback.js` contains request-animation-frame clock math.
+- `url-state.js` parses and serializes the shareable hash, with browser history kept at the edge.
+- `ui.js` owns DOM projection for the HUD, controls, panel, toast, and gallery.
+- `script.js` bootstraps the browser event wiring and coordinates those modules.

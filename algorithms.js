@@ -1,27 +1,34 @@
 // Plasma mode metadata, palettes, and pixel generators.
 // This module contains no DOM or application state, so it can be tested independently.
 
+function defineMode(id, name, note, generatePixel, preparePixel, animationSampleBudget = 180_000) {
+  const prepare = preparePixel
+    ? ({ width, height, seed, palette }) => preparePixel(width, height, seed, palette)
+    : ({ width, height, seed, palette }) => (x, y, pixelIndex) => generatePixel(x, y, width, height, seed, pixelIndex, palette);
+  return { id, name, note, generatePixel, preparePixel, prepare, animationSampleBudget };
+}
+
 export const MODES = [
-  { name: "Drift",          note: "Cloudy color pushed sideways by a slow current",      generatePixel: drift },
-  { name: "Diagonal Bands", note: "Crossed waves with a bright, shifting seam",          generatePixel: diagonalBands },
-  { name: "Scanline Sweep", note: "Bent scanlines sliding through bands of color",       generatePixel: scanlineSweep },
-  { name: "Gradient",       note: "A soft aurora folded into a diagonal wash",           generatePixel: gradient },
-  { name: "Radial Fade",    note: "Offset rings rolling out from a wandering center",    generatePixel: radialFade },
-  { name: "Radial Glow",    note: "Three loose lights orbiting through haze",            generatePixel: radialGlow },
-  { name: "RGB Quadrants",  note: "Separate red, green, and blue waves crossing over",   generatePixel: rgbQuadrants },
-  { name: "Lobe",           note: "A rotating four-leaf field with rippled edges",       generatePixel: lobe },
-  { name: "Sky / Noise",    note: "Cloud bands gathering over a bright horizon",         generatePixel: skyNoise },
-  { name: "Twilight",       note: "Warm woven light after the sun drops",                generatePixel: twilight },
-  { name: "Classic Plasma", note: "The familiar stack of rolling sine waves",           generatePixel: classicPlasma, preparePixel: prepareClassicPlasma },
-  { name: "Interference",   note: "Concentric waves colliding across the frame",         generatePixel: interference, preparePixel: prepareInterference },
-  { name: "Fractal Noise",  note: "Large, slow clouds built from layered noise",         generatePixel: fractalClouds, preparePixel: prepareFractalClouds },
-  { name: "Metaballs",      note: "Soft lights that pool together when they meet",       generatePixel: metaballs, preparePixel: prepareMetaballs },
-  { name: "Turbulence",     note: "Twisted waves with small currents inside them",       generatePixel: turbulence, preparePixel: prepareTurbulence },
-  { name: "Voronoi Glow",   note: "A shifting cell map with lit edges",                  generatePixel: voronoiGlow, preparePixel: prepareVoronoiGlow },
-  { name: "Julia Field",    note: "A Julia set passing in and out of focus",             generatePixel: juliaField, preparePixel: prepareJuliaField },
-  { name: "Polar Ribbons",  note: "Ribbons wound around the center of the frame",        generatePixel: polarRibbons, preparePixel: preparePolarRibbons },
-  { name: "RGB Oscillator", note: "Three color waves moving on their own clocks",        generatePixel: rgbOscillator, preparePixel: prepareRgbOscillator },
-  { name: "Marble",         note: "Long stone-like veins disturbed by noise",            generatePixel: marble, preparePixel: prepareMarble },
+  defineMode("drift",          "Drift",          "Cloudy color pushed sideways by a slow current",      drift,          undefined,            75_000),
+  defineMode("diagonal-bands", "Diagonal Bands", "Crossed waves with a bright, shifting seam",          diagonalBands),
+  defineMode("scanline-sweep", "Scanline Sweep", "Bent scanlines sliding through bands of color",       scanlineSweep),
+  defineMode("gradient",       "Gradient",       "A soft aurora folded into a diagonal wash",           gradient),
+  defineMode("radial-fade",    "Radial Fade",    "Offset rings rolling out from a wandering center",    radialFade),
+  defineMode("radial-glow",    "Radial Glow",    "Three loose lights orbiting through haze",            radialGlow),
+  defineMode("rgb-quadrants",  "RGB Quadrants",  "Separate red, green, and blue waves crossing over",   rgbQuadrants),
+  defineMode("lobe",           "Lobe",           "A rotating four-leaf field with rippled edges",       lobe),
+  defineMode("sky-noise",      "Sky / Noise",    "Cloud bands gathering over a bright horizon",         skyNoise,       undefined,            75_000),
+  defineMode("twilight",       "Twilight",       "Warm woven light after the sun drops",                twilight),
+  defineMode("classic-plasma", "Classic Plasma", "The familiar stack of rolling sine waves",            classicPlasma,  prepareClassicPlasma),
+  defineMode("interference",   "Interference",   "Concentric waves colliding across the frame",         interference,   prepareInterference),
+  defineMode("fractal-noise",  "Fractal Noise",  "Large, slow clouds built from layered noise",         fractalClouds,  prepareFractalClouds, 75_000),
+  defineMode("metaballs",      "Metaballs",      "Soft lights that pool together when they meet",       metaballs,      prepareMetaballs),
+  defineMode("turbulence",     "Turbulence",     "Twisted waves with small currents inside them",       turbulence,     prepareTurbulence),
+  defineMode("voronoi-glow",   "Voronoi Glow",   "A shifting cell map with lit edges",                  voronoiGlow,    prepareVoronoiGlow,    75_000),
+  defineMode("julia-field",    "Julia Field",    "A Julia set passing in and out of focus",             juliaField,     prepareJuliaField),
+  defineMode("polar-ribbons",  "Polar Ribbons",  "Ribbons wound around the center of the frame",        polarRibbons,   preparePolarRibbons),
+  defineMode("rgb-oscillator", "RGB Oscillator", "Three color waves moving on their own clocks",        rgbOscillator,  prepareRgbOscillator),
+  defineMode("marble",         "Marble",         "Long stone-like veins disturbed by noise",            marble,         prepareMarble,         75_000),
 ];
 
 export const PALETTES = [

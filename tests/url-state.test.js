@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { normalizeSeed, PIXEL_SIZE_MAX, PIXEL_SIZE_MIN, readHash, writeHash } from "../url-state.js";
+import { normalizeSeed, parseHash, PIXEL_SIZE_MAX, PIXEL_SIZE_MIN, readHash, serializeHash, writeHash } from "../url-state.js";
 
 test("normalizeSeed wraps values into the shareable unit interval", () => {
   assert.equal(normalizeSeed(0.25), 0.25);
@@ -17,6 +17,22 @@ test("writeHash serializes the shareable state", () => {
   writeHash({ location, history }, { mode: 4, seed: 0.123456789, pixelSize: 3, palette: 2, motion: -28, cycleMs: 7000 });
 
   assert.equal(replacement, "#mode=4&seed=0.123457&size=3&palette=2&motion=-28&cycle=7");
+});
+
+test("parseHash returns a validated partial state without mutating anything", () => {
+  assert.deepEqual(parseHash("#mode=4&seed=-0.25&size=3&palette=2&motion=-28&cycle=7", 20, 5), {
+    mode: 4,
+    seed: 0.75,
+    pixelSize: 3,
+    palette: 2,
+    motion: -28,
+    cycleMs: 7000,
+  });
+  assert.deepEqual(parseHash("", 20, 5), {});
+});
+
+test("serializeHash is independent of browser history", () => {
+  assert.equal(serializeHash({ mode: 4, seed: 0.123456789, pixelSize: 3, palette: 2, motion: -28, cycleMs: 7000 }), "#mode=4&seed=0.123457&size=3&palette=2&motion=-28&cycle=7");
 });
 
 test("readHash validates and clamps values from a deep link", () => {

@@ -71,6 +71,30 @@ test("renderTo prepares a generator once per frame", () => {
   assert.equal(pixelCalls, 12);
 });
 
+test("renderTo accepts the standardized scene preparation contract", () => {
+  let preparedWith;
+  let pixelCalls = 0;
+  const ctx = {
+    createImageData(width, height) {
+      return { data: new Uint8ClampedArray(width * height * 4) };
+    },
+    putImageData() {},
+  };
+
+  renderTo(ctx, 2, 2, {
+    prepare(options) {
+      preparedWith = options;
+      return (x, y) => {
+        pixelCalls++;
+        return x | (y << 8);
+      };
+    },
+  }, 0.75, 1, 3);
+
+  assert.deepEqual(preparedWith, { width: 2, height: 2, seed: 0.75, palette: 3 });
+  assert.equal(pixelCalls, 4);
+});
+
 test("renderTo can render every mode and palette", () => {
   let renderedFrames = 0;
   const ctx = {

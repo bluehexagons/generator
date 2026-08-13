@@ -6,6 +6,12 @@ const toImagePixel = littleEndian
   ? color => color | 0xff000000
   : color => ((color & 255) << 24) | ((color & 0xff00) << 8) | ((color >>> 16) << 8) | 255;
 
+function prepareGenerator(mode, w, h, seed, palette) {
+  return mode.prepare?.({ width: w, height: h, seed, palette })
+    ?? mode.preparePixel?.(w, h, seed, palette)
+    ?? mode.generatePixel;
+}
+
 function getImageBuffer(ctx, w, h) {
   const cached = imageBuffers.get(ctx);
   if (cached?.width === w && cached.height === h) return cached;
@@ -18,7 +24,7 @@ function getImageBuffer(ctx, w, h) {
 }
 
 export function renderTo(ctx, w, h, mode, seed, pixelSize, palette) {
-  const generatePixel = mode.preparePixel?.(w, h, seed, palette) ?? mode.generatePixel;
+  const generatePixel = prepareGenerator(mode, w, h, seed, palette);
   const { image: img, pixels } = getImageBuffer(ctx, w, h);
   const size = Math.max(1, pixelSize | 0);
 

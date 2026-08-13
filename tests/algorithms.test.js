@@ -30,6 +30,14 @@ test("palette definitions have stable, unique names", () => {
   assert.ok(names.length > 0);
 });
 
+test("render modes expose stable identities and animation budgets", () => {
+  const ids = MODES.map(mode => mode.id);
+  assert.equal(new Set(ids).size, ids.length);
+  assert.ok(ids.every(id => /^[a-z0-9-]+$/.test(id)));
+  assert.ok(MODES.every(mode => Number.isFinite(mode.animationSampleBudget) && mode.animationSampleBudget > 0));
+  assert.ok(MODES.every(mode => typeof mode.prepare === "function"));
+});
+
 test("the original scenes vary across both the frame and the seed", () => {
   for (const mode of MODES.slice(0, 10)) {
     const firstFrame = [
