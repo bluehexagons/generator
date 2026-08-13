@@ -2,22 +2,28 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#080b10" />
     <title>Plasma Generator</title>
     <link rel="stylesheet" href="style.css" />
     <script type="module" src="script.js"></script>
   </head>
   <body>
-    <canvas id="main" title="Click to randomize" aria-label="Animated plasma artwork"></canvas>
+    <canvas id="main" aria-label="Animated plasma artwork. Tap to randomize, drag to scrub the seed, or swipe to change modes."></canvas>
+
+    <div class="ambient-grain" aria-hidden="true"></div>
 
     <div class="top-bar">
       <header class="hud top-left">
-        <div class="title"><span class="title-mark" aria-hidden="true"></span>Plasma Generator</div>
+        <div class="eyebrow">
+          <span class="title"><i class="title-mark" aria-hidden="true"></i>Plasma Generator</span>
+          <span id="playback-state" class="playback-state"><i></i> playing</span>
+        </div>
         <div class="mode-line">
-          <div id="mode-name" class="mode-name" aria-live="polite">—</div>
+          <h1 id="mode-name" class="mode-name" aria-live="polite">—</h1>
           <span id="mode-count" class="mode-count">— / —</span>
         </div>
-        <div id="mode-note" class="mode-note">—</div>
+        <p id="mode-note" class="mode-note">—</p>
         <div class="seed-row">
           <span class="label">seed</span>
           <code id="seed-readout">—</code>
@@ -25,45 +31,66 @@
         </div>
       </header>
 
-      <div class="hud top-right">
-        <div class="button-group mode-nav" aria-label="Mode navigation">
-          <button id="btn-prev" class="icon-button" aria-label="Previous mode" title="Previous mode (←)">‹</button>
-          <button id="btn-next" class="icon-button" aria-label="Next mode" title="Next mode (→)">›</button>
-        </div>
-        <div class="button-group">
-          <button id="btn-random" title="New seed (R)"><span class="button-icon" aria-hidden="true">✦</span><span class="button-label">Randomize</span></button>
-          <button id="btn-pause" title="Pause animation (Space)"><span class="button-icon" aria-hidden="true">Ⅱ</span><span class="button-label">Pause</span></button>
-          <button id="btn-cycle" title="Auto-cycle modes (C)"><span class="button-icon" aria-hidden="true">↻</span><span class="button-label">Cycle</span></button>
-        </div>
-        <div class="button-group utility-actions">
-          <button id="btn-save" title="Download PNG (S)"><span class="button-icon" aria-hidden="true">↓</span><span class="button-label">Save PNG</span></button>
-          <button id="btn-share" title="Copy deep link"><span class="button-icon" aria-hidden="true">↗</span><span class="button-label">Copy link</span></button>
-        </div>
-        <button id="btn-settings" aria-label="Toggle controls" aria-controls="panel-right" aria-expanded="false" title="Toggle controls">⚙</button>
+      <div class="hud top-right" aria-label="Artwork actions">
+        <button id="btn-random" title="New seed (R)"><span class="button-icon" aria-hidden="true">✦</span><span class="button-label">Randomize</span></button>
+        <button id="btn-save" title="Download PNG (S)"><span class="button-icon" aria-hidden="true">↓</span><span class="button-label">Save</span></button>
+        <button id="btn-share" title="Copy deep link"><span class="button-icon" aria-hidden="true">↗</span><span class="button-label">Share</span></button>
+        <button id="btn-settings" class="settings-button" aria-label="Open controls" aria-controls="panel-right" aria-expanded="false" title="Open controls"><span aria-hidden="true">☷</span><span class="button-label">Controls</span></button>
       </div>
     </div>
 
-    <aside class="hud right" id="panel-right">
-      <div class="panel-heading"><span>Adjustments</span><span class="panel-live"><i></i> live</span></div>
-      <div class="control">
-        <label for="pixel-size">Pixel size <span id="pixel-size-out">1</span></label>
-        <input id="pixel-size" type="range" min="1" max="40" step="1" />
+    <div id="panel-scrim" class="panel-scrim" aria-hidden="true"></div>
+    <aside class="hud right" id="panel-right" aria-label="Generator controls">
+      <div class="panel-heading">
+        <span>Controls</span>
+        <button id="btn-close-settings" class="close-button" aria-label="Close controls">×</button>
       </div>
-      <div class="control">
-        <label for="drift">Animate seed <span id="drift-out">off</span></label>
-        <input id="drift" type="range" min="-100" max="100" step="1" />
-      </div>
-      <div class="control">
-        <label for="palette">Palette</label>
-        <select id="palette" aria-label="Color palette"></select>
-      </div>
+
+      <section class="control-section" aria-labelledby="motion-heading">
+        <div class="section-heading" id="motion-heading">Motion</div>
+        <div class="control">
+          <label for="drift">Speed <span id="drift-out">1×</span></label>
+          <input id="drift" type="range" min="-100" max="100" step="1" />
+          <div class="range-ends" aria-hidden="true"><span>reverse</span><span>still</span><span>forward</span></div>
+        </div>
+        <div class="control">
+          <label for="cycle-rate">Scene duration <span id="cycle-rate-out">6 sec</span></label>
+          <input id="cycle-rate" type="range" min="3" max="15" step="1" />
+        </div>
+      </section>
+
+      <section class="control-section" aria-labelledby="look-heading">
+        <div class="section-heading" id="look-heading">Appearance</div>
+        <div class="control">
+          <label for="pixel-size">Pixel size <span id="pixel-size-out">2</span></label>
+          <input id="pixel-size" type="range" min="1" max="40" step="1" />
+        </div>
+        <div class="control">
+          <label for="palette">Palette</label>
+          <select id="palette" aria-label="Color palette"></select>
+        </div>
+      </section>
+
+      <div class="gesture-hint"><span aria-hidden="true">↔</span> Drag the artwork to scrub. Swipe on touch to change scenes.</div>
       <div class="hint">
-        Keys: <kbd>←</kbd>/<kbd>→</kbd> mode · <kbd>0</kbd>–<kbd>9</kbd> jump ·
-        <kbd>R</kbd> seed · <kbd>Space</kbd> pause · <kbd>C</kbd> cycle · <kbd>S</kbd> save.
-        Click the artwork to reseed it.
+        <kbd>←</kbd>/<kbd>→</kbd> scene · <kbd>R</kbd> seed · <kbd>Space</kbd> play ·
+        <kbd>C</kbd> cycle · <kbd>S</kbd> save · <kbd>F</kbd> controls
       </div>
     </aside>
 
-    <nav id="gallery" class="hud bottom" aria-label="Render modes"></nav>
+    <div class="bottom-deck">
+      <div class="hud transport" aria-label="Playback controls">
+        <div class="transport-buttons">
+          <button id="btn-prev" class="icon-button" aria-label="Previous scene" title="Previous scene (←)">‹</button>
+          <button id="btn-pause" class="play-button" aria-label="Pause animation" aria-pressed="false" title="Pause animation (Space)"><span class="button-icon" aria-hidden="true">Ⅱ</span><span class="button-label">Pause</span></button>
+          <button id="btn-next" class="icon-button" aria-label="Next scene" title="Next scene (→)">›</button>
+        </div>
+        <button id="btn-cycle" class="cycle-button" aria-pressed="false" title="Auto-cycle scenes (C)"><span class="button-icon" aria-hidden="true">↻</span><span class="button-label">Auto</span></button>
+        <div class="cycle-meter" aria-hidden="true"><span id="cycle-progress"></span></div>
+      </div>
+      <nav id="gallery" class="hud gallery" aria-label="Render scenes"></nav>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
   </body>
 </html>

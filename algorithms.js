@@ -2,26 +2,26 @@
 // This module contains no DOM or application state, so it can be tested independently.
 
 export const MODES = [
-  { name: "Drift",          note: "noise mixed with a seeded color, left to right",       generatePixel: drift },
-  { name: "Diagonal Bands", note: "two coordinate sweeps modulated by seed",             generatePixel: diagonalBands },
-  { name: "Scanline Sweep", note: "position-counter modulated, fast cycles",             generatePixel: scanlineSweep },
-  { name: "Gradient",       note: "smooth diagonal gradient tinted by seed",             generatePixel: gradient },
-  { name: "Radial Fade",    note: "single-channel radial falloff",                       generatePixel: radialFade },
-  { name: "Radial Glow",    note: "seeded color attenuated by radius",                   generatePixel: radialGlow },
-  { name: "RGB Quadrants",  note: "x→red, y→blue, midpoint→green",                       generatePixel: rgbQuadrants },
-  { name: "Lobe",           note: "radial × x·y product, soft lobes",                    generatePixel: lobe },
-  { name: "Sky/Noise",      note: "seeded color up top, random noise below",             generatePixel: skyNoise },
-  { name: "Twilight",       note: "position + seed crossfade, warm tones",               generatePixel: twilight },
-  { name: "Classic Plasma", note: "layered sine waves, the demoscene staple",            generatePixel: classicPlasma, preparePixel: prepareClassicPlasma },
-  { name: "Interference",   note: "concentric waves from several seeded sources",        generatePixel: interference, preparePixel: prepareInterference },
-  { name: "Fractal Noise",  note: "smooth multi-scale value noise, plasma-like clouds", generatePixel: fractalClouds, preparePixel: prepareFractalClouds },
-  { name: "Metaballs",      note: "soft glowing fields from moving circular sources",    generatePixel: metaballs, preparePixel: prepareMetaballs },
-  { name: "Turbulence",     note: "domain-warped waves with swirling detail",            generatePixel: turbulence, preparePixel: prepareTurbulence },
-  { name: "Voronoi Glow",   note: "cellular distance fields with luminous borders",      generatePixel: voronoiGlow, preparePixel: prepareVoronoiGlow },
-  { name: "Julia Field",    note: "escape-time fractal rendered as shifting plasma",     generatePixel: juliaField, preparePixel: prepareJuliaField },
-  { name: "Polar Ribbons",  note: "angular waves wrapped around a radial flow",          generatePixel: polarRibbons, preparePixel: preparePolarRibbons },
-  { name: "RGB Oscillator", note: "three independent waves for liquid color bands",      generatePixel: rgbOscillator, preparePixel: prepareRgbOscillator },
-  { name: "Marble",         note: "veined stone from warped sine and noise",             generatePixel: marble, preparePixel: prepareMarble },
+  { name: "Drift",          note: "Cloudy color pushed sideways by a slow current",      generatePixel: drift },
+  { name: "Diagonal Bands", note: "Crossed waves with a bright, shifting seam",          generatePixel: diagonalBands },
+  { name: "Scanline Sweep", note: "Bent scanlines sliding through bands of color",       generatePixel: scanlineSweep },
+  { name: "Gradient",       note: "A soft aurora folded into a diagonal wash",           generatePixel: gradient },
+  { name: "Radial Fade",    note: "Offset rings rolling out from a wandering center",    generatePixel: radialFade },
+  { name: "Radial Glow",    note: "Three loose lights orbiting through haze",            generatePixel: radialGlow },
+  { name: "RGB Quadrants",  note: "Separate red, green, and blue waves crossing over",   generatePixel: rgbQuadrants },
+  { name: "Lobe",           note: "A rotating four-leaf field with rippled edges",       generatePixel: lobe },
+  { name: "Sky / Noise",    note: "Cloud bands gathering over a bright horizon",         generatePixel: skyNoise },
+  { name: "Twilight",       note: "Warm woven light after the sun drops",                generatePixel: twilight },
+  { name: "Classic Plasma", note: "The familiar stack of rolling sine waves",           generatePixel: classicPlasma, preparePixel: prepareClassicPlasma },
+  { name: "Interference",   note: "Concentric waves colliding across the frame",         generatePixel: interference, preparePixel: prepareInterference },
+  { name: "Fractal Noise",  note: "Large, slow clouds built from layered noise",         generatePixel: fractalClouds, preparePixel: prepareFractalClouds },
+  { name: "Metaballs",      note: "Soft lights that pool together when they meet",       generatePixel: metaballs, preparePixel: prepareMetaballs },
+  { name: "Turbulence",     note: "Twisted waves with small currents inside them",       generatePixel: turbulence, preparePixel: prepareTurbulence },
+  { name: "Voronoi Glow",   note: "A shifting cell map with lit edges",                  generatePixel: voronoiGlow, preparePixel: prepareVoronoiGlow },
+  { name: "Julia Field",    note: "A Julia set passing in and out of focus",             generatePixel: juliaField, preparePixel: prepareJuliaField },
+  { name: "Polar Ribbons",  note: "Ribbons wound around the center of the frame",        generatePixel: polarRibbons, preparePixel: preparePolarRibbons },
+  { name: "RGB Oscillator", note: "Three color waves moving on their own clocks",        generatePixel: rgbOscillator, preparePixel: prepareRgbOscillator },
+  { name: "Marble",         note: "Long stone-like veins disturbed by noise",            generatePixel: marble, preparePixel: prepareMarble },
 ];
 
 export const PALETTES = [
@@ -33,7 +33,8 @@ export const PALETTES = [
 ];
 
 // ---------------- pixel functions ----------------
-// Faithful ports of the original pixelN() string-returning functions.
+// The first ten began as small pixel experiments. They keep the same basic
+// ideas, but use normalized coordinates and a little more structure now.
 // Generators return packed 0xBBGGRR colors so the renderer can write one pixel
 // at a time without allocating a three-element array for every sample.
 const clamp = v => v < 0 ? 0 : v > 255 ? 255 : v | 0;
@@ -72,73 +73,93 @@ function fractalNoise(x, y, seed) {
   return total / 0.9375;
 }
 
-function drift(x, y, w, h, seed) {
-  const c = hash2(x, y, seed) * 16777216 * (1 - x / w) + seed * 16777216 * (x / w);
-  return packRgb(c % 256, (c / 256) % 256, c / 65536);
+function drift(x, y, w, h, seed, _p, palette) {
+  const nx = x / w, ny = y / h, phase = seed * TAU;
+  const current = smoothNoise(nx * 4.8 + Math.cos(phase) * 0.7, ny * 4.8 + Math.sin(phase) * 0.45, 4.7);
+  const fold = Math.sin((nx * 2.2 + ny * 1.4) * TAU + phase) * 0.5;
+  return hue(seed * 0.72 + current * 0.3 + fold * 0.075 + nx * 0.08, palette);
 }
 
-function diagonalBands(x, y, w, h, seed) {
-  const tx = seed * 65536 + x;
-  const ty = seed * 65536 + y;
-  return packRgb(tx % 256, ty % 256, (tx + ty) % 256);
+function diagonalBands(x, y, w, h, seed, _p, palette) {
+  const nx = x / w, ny = y / h, phase = seed * TAU;
+  const crossed = Math.sin((nx * 3.8 + ny * 2.7) * TAU + phase) + Math.sin((nx * 6.1 - ny * 4.3) * TAU - phase * 1.35);
+  const seam = Math.cos(Math.hypot(nx - 0.5, ny - 0.5) * 22 - phase * 0.7);
+  return hue(seed * 0.63 + crossed * 0.055 + seam * 0.035, palette);
 }
 
-function scanlineSweep(x, y, w, h, seed, p) {
-  const tp = seed * 65536 + p;
-  return packRgb(tp % 256, (tp / 128) % 256, (tp / 256) % 256);
+function scanlineSweep(x, y, w, h, seed, _p, palette) {
+  const nx = x / w, ny = y / h, phase = seed * TAU;
+  const bend = Math.sin(nx * TAU * 2.4 + phase) * 0.055;
+  const broad = Math.sin((ny + bend) * TAU * 7 - phase * 1.6);
+  const fine = Math.sin((ny + bend * 0.4) * h * 0.48 + phase * 3);
+  return hue(seed * 0.82 + nx * 0.12 + broad * 0.075 + fine * 0.018, palette);
 }
 
-function gradient(x, y, w, h, seed) {
-  const tp = seed * 65536;
-  const pix = ((y / h) * 256 + (x / w) * 256) % 256;
-  return packRgb((pix + tp / 65536) % 256, (pix + tp / 256) % 256, (pix + tp) % 256);
+function gradient(x, y, w, h, seed, _p, palette) {
+  const nx = x / w, ny = y / h, phase = seed * TAU;
+  const curtain = Math.sin(nx * 8 + Math.sin(ny * 5 - phase) * 1.6 + phase) * (1 - ny) * 0.16;
+  const wash = nx * 0.16 + ny * 0.24 + Math.sin((nx + ny) * Math.PI + phase) * 0.045;
+  return hue(seed * 0.58 + wash + curtain, palette);
 }
 
-function radialFade(x, y, w, h, seed) {
-  const scale = Math.hypot(x - w, y - h) / Math.hypot(w, h);
-  const c = seed * 16777216 * scale;
-  return packRgb(c % 256, (c / 256) % 256, c / 65536);
+function radialFade(x, y, w, h, seed, _p, palette) {
+  const phase = seed * TAU;
+  const cx = 0.5 + Math.cos(phase) * 0.18, cy = 0.5 + Math.sin(phase * 1.3) * 0.15;
+  const dx = (x / w - cx) * (w / h), dy = y / h - cy;
+  const radius = Math.hypot(dx, dy);
+  const rings = Math.sin(radius * 34 - phase * 2) * Math.exp(-radius * 1.7);
+  return hue(seed * 0.75 + radius * 0.2 + rings * 0.12, palette);
 }
 
-function radialGlow(x, y, w, h, seed) {
-  const scale = Math.hypot(x - w, y - h) / Math.hypot(w, h);
-  const c = seed * 16777216;
-  return packRgb((c % 256) * scale, ((c / 256) % 256) * scale, (c / 65536) * scale);
+function radialGlow(x, y, w, h, seed, _p, palette) {
+  const nx = x / w, ny = y / h, phase = seed * TAU;
+  let field = 0;
+  for (let i = 0; i < 3; i++) {
+    const angle = phase * (0.45 + i * 0.22) + i * TAU / 3;
+    const cx = 0.5 + Math.cos(angle) * (0.18 + i * 0.025);
+    const cy = 0.5 + Math.sin(angle * 1.2) * (0.16 + i * 0.018);
+    const dx = nx - cx, dy = ny - cy;
+    field += 0.018 / (dx * dx + dy * dy + 0.012);
+  }
+  return hue(seed * 0.68 + Math.tanh(field) * 0.34, palette);
 }
 
 function rgbQuadrants(x, y, w, h, seed) {
-  const r = (x / w) * 256;
-  const g = ((x / w + y / h) / 2) * 256;
-  const b = (y / h) * 256;
-  const c = (r + g * 256 + b * 65536) * seed;
-  return packRgb(c % 256, (c / 256) % 256, c / 65536);
-}
-
-function lobe(x, y, w, h, seed) {
-  const scale = Math.hypot(x - w, y - h) / Math.hypot(w, h);
-  const c = ((seed / 2) * 16777216 * scale * 2 * ((x / w) * (y / h))) / 256;
-  return packRgb(c % 256, (c / 256) % 256, c / 65536);
-}
-
-function skyNoise(x, y, w, h, seed) {
-  const c = seed * 16777216;
-  let r = c % 256;
-  let g = (c / 256) % 256;
-  let b = c / 65536;
-  const t = y / h;
-  const noise = hash2(x, y, seed) * 256;
-  r = r * (1 - t) + noise * t;
-  g = g * (1 - t) + noise * t;
-  b = b * (1 - t) + noise * t;
+  const nx = x / w, ny = y / h, phase = seed * TAU;
+  const dx = nx - 0.5, dy = ny - 0.5;
+  const pulse = Math.sin(Math.hypot(dx, dy) * 18 - phase * 1.8);
+  const r = (Math.sin(nx * TAU * 2 + phase + pulse) + 1) * 127.5;
+  const g = (Math.sin((nx + ny) * TAU * 1.35 - phase * 0.7) + 1) * 127.5;
+  const b = (Math.sin(ny * TAU * 2.3 + phase * 1.2 - pulse) + 1) * 127.5;
   return packRgb(r, g, b);
 }
 
-function twilight(x, y, w, h, seed, p) {
-  const tseed = seed / 2 + 0.5;
-  let r = ((p + x + y) / 3 / ((w * h + w + h) / 3)) * 256;
-  const g = tseed * (x / w) * 256;
-  const b = tseed * 256;
-  r += (r / 2) * (tseed * 2 - 1);
+function lobe(x, y, w, h, seed, _p, palette) {
+  const dx = (x / w - 0.5) * (w / h), dy = y / h - 0.5;
+  const angle = Math.atan2(dy, dx), radius = Math.hypot(dx, dy), phase = seed * TAU;
+  const petals = Math.cos(angle * 4 + phase) * Math.exp(-radius * 2.6);
+  const edge = Math.sin((radius + petals * 0.12) * 30 - phase * 1.4);
+  return hue(seed * 0.7 + petals * 0.15 + edge * 0.055, palette);
+}
+
+function skyNoise(x, y, w, h, seed) {
+  const nx = x / w, ny = y / h, phase = seed * TAU;
+  const clouds = fractalNoise(nx * 5 + seed * 1.8, ny * 8 - seed * 0.7, 18.2);
+  const horizon = Math.exp(-Math.pow((ny - 0.64) * 7, 2));
+  const grain = hash2(x, y, 2.4) - 0.5;
+  const r = 18 + ny * 48 + horizon * 150 + clouds * 35 + grain * 9;
+  const g = 28 + ny * 34 + horizon * 72 + clouds * 48 + grain * 7;
+  const b = 58 + (1 - ny) * 80 + horizon * 35 + clouds * 72 + Math.sin(nx * 5 + phase) * 8;
+  return packRgb(r, g, b);
+}
+
+function twilight(x, y, w, h, seed) {
+  const nx = x / w, ny = y / h, phase = seed * TAU;
+  const weave = Math.sin(nx * 18 + Math.sin(ny * 7 - phase) * 2.2 + phase) * 0.5 + 0.5;
+  const horizon = Math.exp(-Math.pow((ny - 0.57) * 5.5, 2));
+  const r = 32 + horizon * 190 + weave * 72 + ny * 30;
+  const g = 18 + horizon * 62 + weave * 32 + nx * 24;
+  const b = 52 + (1 - ny) * 90 + (1 - weave) * 58 + Math.sin(phase + nx * 3) * 12;
   return packRgb(r, g, b);
 }
 

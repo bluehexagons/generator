@@ -30,6 +30,24 @@ test("palette definitions have stable, unique names", () => {
   assert.ok(names.length > 0);
 });
 
+test("the original scenes vary across both the frame and the seed", () => {
+  for (const mode of MODES.slice(0, 10)) {
+    const firstFrame = [
+      mode.generatePixel(8, 8, 96, 64, 0.21, 776, 0),
+      mode.generatePixel(48, 30, 96, 64, 0.21, 2928, 0),
+      mode.generatePixel(87, 55, 96, 64, 0.21, 5367, 0),
+    ];
+    const laterFrame = [
+      mode.generatePixel(8, 8, 96, 64, 0.61, 776, 0),
+      mode.generatePixel(48, 30, 96, 64, 0.61, 2928, 0),
+      mode.generatePixel(87, 55, 96, 64, 0.61, 5367, 0),
+    ];
+
+    assert.ok(new Set(firstFrame).size > 1, `${mode.name} should vary across the canvas`);
+    assert.notDeepEqual(laterFrame, firstFrame, `${mode.name} should change as the seed moves`);
+  }
+});
+
 test("prepared generators preserve their unprepared output", () => {
   const width = 137;
   const height = 83;

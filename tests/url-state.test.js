@@ -14,9 +14,9 @@ test("writeHash serializes the shareable state", () => {
   let replacement;
   const history = { replaceState: (_state, _title, hash) => { replacement = hash; } };
 
-  writeHash({ location, history }, { mode: 4, seed: 0.123456789, pixelSize: 3, palette: 2 });
+  writeHash({ location, history }, { mode: 4, seed: 0.123456789, pixelSize: 3, palette: 2, motion: -28, cycleMs: 7000 });
 
-  assert.equal(replacement, "#mode=4&seed=0.123457&size=3&palette=2");
+  assert.equal(replacement, "#mode=4&seed=0.123457&size=3&palette=2&motion=-28&cycle=7");
 });
 
 test("readHash validates and clamps values from a deep link", () => {
@@ -37,4 +37,15 @@ test("readHash ignores malformed values", () => {
   readHash({ hash: "#mode=nope&seed=&size=Infinity&palette=NaN" }, state, 20, 5);
 
   assert.deepEqual(state, { mode: 2, seed: 0.5, pixelSize: 4, palette: 1 });
+});
+
+test("readHash restores and clamps playback settings", () => {
+  const state = { mode: 0, seed: 0.5, pixelSize: 2, palette: 0, motion: 24, cycleMs: 0 };
+  readHash({ hash: "#motion=-999&cycle=99" }, state, 20, 5);
+  assert.equal(state.motion, -100);
+  assert.equal(state.cycleMs, 15000);
+
+  readHash({ hash: "#motion=18&cycle=0" }, state, 20, 5);
+  assert.equal(state.motion, 18);
+  assert.equal(state.cycleMs, 0);
 });

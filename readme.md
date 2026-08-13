@@ -1,37 +1,45 @@
-# generator
+# Plasma Generator
 
-Generates plasma-style images in a `<canvas>`. Twenty render modes, each a different bit of pixel math.
+A browser toy for making animated plasma, noise, and interference patterns. It has twenty scenes, five palettes, a seed you can share, and no runtime dependencies.
 
-Originally written on an iPhone 3GS between classes — one of my first projects. The original ten `pixelN()` formulas are preserved; the surrounding scaffold has been rebuilt for demo use: full-viewport high-DPI canvas, deterministic seeded rendering, live thumbnail gallery, seed animation, PNG export, and a deep-linkable URL (`#mode=10&seed=0.1234&size=1`).
+The first ten scenes grew out of pixel functions I wrote on an iPhone 3GS between classes. By then I had already been programming for years, mostly in other areas. This was a fun constraint: make something visual one pixel and one small formula at a time. Those formulas have been loosened up for this version while keeping their original ideas intact.
 
-The expanded collection includes several familiar plasma approaches: layered sine waves (the classic demoscene formula), radial wave interference, smooth fractal/value noise, metaball-style inverse-distance fields, domain warping, Voronoi cells, Julia escape-time fields, polar ribbons, RGB oscillators, and marble-like turbulence. The palette selector adds Prism, Ember, Ocean, Acid, and Sunset variations. The original modes remain useful as a small history of pixel-level experiments, while the newer modes are stable enough to share and export.
+The other ten scenes go further into familiar procedural territory: sine-wave plasma, value noise, metaballs, domain warping, Voronoi cells, a Julia set, polar ribbons, RGB oscillators, and marble veins.
 
-## Run
+## Run it
 
-Serve the directory with any static server and open `index.html` (for example, `python3 -m http.server`). There is no build step; the small ES modules are loaded directly by the browser.
+Serve the directory with any static file server, then open `index.html`:
 
-Run the module tests with `npm test`.
+```sh
+python3 -m http.server
+```
 
-The browser app has no third-party dependencies; Node 18.18 or newer is required for the module test runner.
+There is no build step. The app uses plain JavaScript modules and the Canvas 2D API.
 
-Run the syntax and test checks together with `npm run check && npm test`.
+To run the checks:
 
-## Source layout
+```sh
+npm run check
+npm test
+```
 
-- `algorithms.js` — self-contained mode definitions, palettes, deterministic noise helpers, and pixel generators
-- `renderer.js` — the focused `ImageData` canvas renderer
-- `url-state.js` — shareable hash encoding and validation
-- `script.js` — application state, animation loop, DOM controls, and gallery wiring
+Node 18.18 or newer is required for the tests.
 
 ## Controls
 
-- Click the canvas — new seed
-- `←` / `→` — cycle modes (or click a thumbnail, or `0`–`9` for the first ten)
-- `R` — randomize seed
-- `Space` — pause/play animation
-- `C` — auto-cycle modes every few seconds
-- `S` — save the current frame as PNG
-- "Pixel size" slider — chunky-pixel mode
-- "Animate seed" slider — drift the seed each frame (positive or negative)
-- "Palette" — recolor the newer procedural generators
-- "Copy link" — shareable URL encoding the current mode/seed/size/palette
+- Tap the artwork for a new seed.
+- Drag left or right to scrub through seeds.
+- Swipe on a touch screen, use the arrow keys, or choose a thumbnail to change scenes.
+- Use the transport to pause the motion or automatically move through the scenes.
+- Adjust motion speed in either direction, scene duration, pixel size, and palette in the controls panel.
+- Press `R` for a new seed, `Space` to play or pause, `C` to toggle auto-play, `S` to save, or `F` to open the controls.
+- Share copies a link containing the scene, seed, palette, pixel size, and playback settings.
+
+Animation renders at a slightly coarser resolution when a high-density display would make full-resolution frames too expensive. Pausing returns to the requested pixel size, and PNG exports always use that requested size.
+
+## Files
+
+- `algorithms.js` contains the scenes, palettes, noise helpers, and pixel functions.
+- `renderer.js` writes the pixels into a reusable `ImageData` buffer.
+- `url-state.js` reads and writes the shareable hash.
+- `script.js` owns playback, controls, gestures, and the gallery.
