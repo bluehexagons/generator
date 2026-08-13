@@ -521,6 +521,12 @@ kbd {
   .panel-scrim.open { display: block; }
 }
 
+@media (max-width: 740px) {
+  .top-right button { min-width: 40px; padding-inline: 8px; }
+  .top-right .button-label { display: none; }
+  .top-right .button-icon { margin-right: 0; }
+}
+
 @media (max-width: 680px) {
   :root {
     --safe-top: max(9px, env(safe-area-inset-top));
@@ -537,7 +543,7 @@ kbd {
   .mode-note { margin-bottom: 7px; font-size: 10px; }
   .seed-row input { display: none; }
   .top-right { flex-direction: column; gap: 3px; padding: 4px; }
-  .top-right button { min-width: 40px; min-height: 40px; padding: 7px; }
+  .top-right button { min-width: 44px; min-height: 44px; padding: 7px; }
   .top-right .button-label { display: none; }
   .top-right .button-icon { margin-right: 0; }
   .bottom-deck { align-items: stretch; gap: 6px; }
@@ -553,6 +559,20 @@ kbd {
   }
   .right .hint { display: none; }
   .gesture-hint { margin-bottom: 2px; }
+}
+
+@media (max-width: 360px) {
+  .top-left { width: calc(100vw - 78px); }
+}
+
+@media (max-width: 300px) {
+  .play-button { min-width: 84px; }
+  .cycle-button { min-width: 56px; }
+}
+
+@media (pointer: coarse) {
+  button { min-height: 44px; }
+  .icon-button { min-width: 44px; }
 }
 
 @media (max-height: 640px) and (orientation: landscape) {

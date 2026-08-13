@@ -17,10 +17,10 @@ const state = {
   seed: Math.random(),
   palette: 0,
   pixelSize: 2,
-  motion: prefersReducedMotion.matches ? 0 : DEFAULT_MOTION,
+  motion: DEFAULT_MOTION,
   cycleMs: 0,
-  running: true,
-  lastCycle: 0,
+  cycleElapsed: 0,
+  running: !prefersReducedMotion.matches,
   scrubbing: false,
 };
 
@@ -89,7 +89,7 @@ function hasActivePlayback() {
 function ensureAnimationLoop(resetClock = false) {
   if (resetClock) {
     lastFrame = 0;
-    timeSinceRender = ANIMATION_FRAME_MS;
+    timeSinceRender = 0;
   }
   if (!animationFrameId && hasActivePlayback()) animationFrameId = requestAnimationFrame(loop);
 }
@@ -98,26 +98,28 @@ function loop(timestamp) {
   animationFrameId = 0;
   if (!hasActivePlayback()) return;
 
-  const elapsed = lastFrame ? Math.min(80, timestamp - lastFrame) : 16;
+  const elapsed = lastFrame ? timestamp - lastFrame : 0;
   lastFrame = timestamp;
-  timeSinceRender += elapsed;
+  timeSinceRender += Math.min(80, elapsed);
+  let sceneChanged = false;
 
   if (state.cycleMs > 0) {
-    if (!state.lastCycle) state.lastCycle = timestamp;
-    const cycleElapsed = timestamp - state.lastCycle;
-    cycleProgress.style.transform = `scaleX(${Math.min(1, cycleElapsed / state.cycleMs)})`;
+    state.cycleElapsed += elapsed;
+    cycleProgress.style.transform = `scaleX(${Math.min(1, state.cycleElapsed / state.cycleMs)})`;
 
-    if (cycleElapsed >= state.cycleMs) {
-      state.mode = (state.mode + 1) % MODES.length;
+    if (state.cycleElapsed >= state.cycleMs) {
+      const scenesPassed = Math.floor(state.cycleElapsed / state.cycleMs);
+      state.mode = (state.mode + scenesPassed) % MODES.length;
       state.seed = Math.random();
-      state.lastCycle = timestamp;
+      state.cycleElapsed %= state.cycleMs;
+      cycleProgress.style.transform = `scaleX(${state.cycleElapsed / state.cycleMs})`;
       updateGallerySelection(true);
       writeHash(window, state);
-      timeSinceRender = ANIMATION_FRAME_MS;
+      sceneChanged = true;
     }
   }
 
-  if (timeSinceRender >= ANIMATION_FRAME_MS) {
+  if (timeSinceRender >= ANIMATION_FRAME_MS || sceneChanged) {
     if (state.motion !== 0 && !state.scrubbing) {
       state.seed = normalizeSeed(state.seed + motionDelta(state.motion) * (timeSinceRender / 16));
     }
@@ -137,7 +139,7 @@ function syncHud() {
 
 function setMode(mode, { announce = true, scroll = true } = {}) {
   state.mode = ((mode % MODES.length) + MODES.length) % MODES.length;
-  state.lastCycle = performance.now();
+  state.cycleElapsed = 0;
   cycleProgress.style.transform = "scaleX(0)";
   updateGallerySelection(scroll);
   writeHash(window, state);
@@ -156,7 +158,8 @@ function setPalette(palette) {
 
 function setSeed(seed, announce = false) {
   state.seed = normalizeSeed(seed);
-  state.lastCycle = performance.now();
+  state.cycleElapsed = 0;
+  cycleProgress.style.transform = "scaleX(0)";
   writeHash(window, state);
   scheduleRender();
   if (announce) showToast(`Seed ${state.seed.toFixed(4)}`);
@@ -224,6 +227,8 @@ function syncPlaybackControls() {
   pauseBtn.title = paused ? "Play animation (Space)" : "Pause animation (Space)";
   cycleBtn.classList.toggle("on", cycling);
   cycleBtn.setAttribute("aria-pressed", String(cycling));
+  cycleBtn.setAttribute("aria-label", cycling ? "Stop auto-play" : "Auto-play scenes");
+  cycleBtn.title = cycling ? "Stop auto-play (C)" : "Auto-play scenes (C)";
   playbackStateEl.classList.toggle("paused", paused);
   playbackStateEl.lastChild.textContent = paused ? " paused" : cycling ? " auto-playing" : state.motion === 0 ? " still" : " playing";
   if (!cycling) cycleProgress.style.transform = "scaleX(0)";
@@ -264,19 +269,40 @@ function setPanelOpen(open) {
   const panel = document.getElementById("panel-right");
   const scrim = document.getElementById("panel-scrim");
   const settingsButton = document.getElementById("btn-settings");
+  const modal = compactControls.matches;
+  const background = document.querySelectorAll("#main, .top-bar, .bottom-deck");
+
+  if (!open) {
+    for (const element of background) element.inert = false;
+    if (panel.contains(document.activeElement)) settingsButton.focus({ preventScroll: true });
+  }
+
   panel.classList.toggle("open", open);
+  panel.setAttribute("aria-hidden", String(!open));
+  if (modal) {
+    panel.setAttribute("role", "dialog");
+    panel.setAttribute("aria-modal", String(open));
+  } else {
+    panel.removeAttribute("role");
+    panel.removeAttribute("aria-modal");
+  }
   scrim.classList.toggle("open", open);
   scrim.setAttribute("aria-hidden", String(!open));
   settingsButton.setAttribute("aria-expanded", String(open));
   settingsButton.setAttribute("aria-label", open ? "Close controls" : "Open controls");
   settingsButton.title = open ? "Close controls (F)" : "Open controls (F)";
+
+  if (open) {
+    for (const element of background) element.inert = modal;
+    if (modal) document.getElementById("btn-close-settings").focus({ preventScroll: true });
+  }
 }
 
 function wireCanvasGestures() {
   let gesture = null;
 
   main.addEventListener("pointerdown", event => {
-    if (event.button !== 0) return;
+    if (event.button !== 0 || gesture) return;
     gesture = { id: event.pointerId, type: event.pointerType, x: event.clientX, y: event.clientY, seed: state.seed, moved: false };
     state.scrubbing = event.pointerType !== "touch";
     main.classList.toggle("is-scrubbing", state.scrubbing);
@@ -287,7 +313,7 @@ function wireCanvasGestures() {
     if (!gesture || gesture.id !== event.pointerId) return;
     const dx = event.clientX - gesture.x;
     const dy = event.clientY - gesture.y;
-    gesture.moved ||= Math.hypot(dx, dy) > 7;
+    gesture.moved ||= Math.hypot(dx, dy) > (gesture.type === "touch" ? 14 : 7);
     if (gesture.type !== "touch" && gesture.moved) {
       state.seed = normalizeSeed(gesture.seed + dx / Math.max(240, main.clientWidth));
       scheduleRender();
@@ -300,16 +326,18 @@ function wireCanvasGestures() {
     const dy = event.clientY - gesture.y;
     const wasTouch = gesture.type === "touch";
     const isSwipe = wasTouch && Math.abs(dx) > Math.max(52, main.clientWidth * 0.12) && Math.abs(dx) > Math.abs(dy) * 1.25;
+    const isTap = Math.hypot(dx, dy) <= (wasTouch ? 18 : 7);
 
     state.scrubbing = false;
     main.classList.remove("is-scrubbing");
     if (isSwipe) setMode(state.mode + (dx < 0 ? 1 : -1));
-    else if (!gesture.moved) randomizeSeed();
+    else if (isTap) randomizeSeed();
     else if (!wasTouch) {
       writeHash(window, state);
       showToast(`Seed ${state.seed.toFixed(4)}`);
     }
     gesture = null;
+    scheduleRender();
     ensureAnimationLoop(true);
   };
 
@@ -318,9 +346,33 @@ function wireCanvasGestures() {
     if (!gesture || gesture.id !== event.pointerId) return;
     state.scrubbing = false;
     main.classList.remove("is-scrubbing");
+    if (gesture.type !== "touch" && gesture.moved) writeHash(window, state);
     gesture = null;
+    scheduleRender();
     ensureAnimationLoop(true);
   });
+}
+
+async function copyText(text) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch {
+      // Fall through for HTTP hosts and browsers with restricted clipboard access.
+    }
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  textarea.remove();
+  if (!copied) throw new Error("Clipboard unavailable");
 }
 
 function wireUi() {
@@ -336,7 +388,10 @@ function wireUi() {
     const exportContext = exportCanvas.getContext("2d", { alpha: false });
     renderTo(exportContext, exportCanvas.width, exportCanvas.height, MODES[state.mode], state.seed, state.pixelSize, state.palette);
     exportCanvas.toBlob(blob => {
-      if (!blob) return;
+      if (!blob) {
+        showToast("Couldn’t create the PNG");
+        return;
+      }
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.download = `plasma-${MODES[state.mode].name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${state.seed.toFixed(4)}.png`;
@@ -354,20 +409,23 @@ function wireUi() {
     writeHash(window, state);
     try {
       if (navigator.share && matchMedia("(pointer: coarse)").matches) {
-        await navigator.share({ title: `Plasma Generator — ${MODES[state.mode].name}`, url: location.href });
-        showToast("Shared");
-      } else {
-        await navigator.clipboard.writeText(location.href);
-        showToast("Link copied");
+        try {
+          await navigator.share({ title: `Plasma Generator — ${MODES[state.mode].name}`, url: location.href });
+          showToast("Shared");
+          return;
+        } catch (error) {
+          if (error?.name === "AbortError") return;
+        }
       }
+      await copyText(location.href);
+      showToast("Link copied");
     } catch (error) {
-      if (error?.name !== "AbortError") showToast("Couldn’t share the link");
+      showToast("Couldn’t share the link");
     }
   });
 
   pauseBtn.addEventListener("click", () => {
     state.running = !state.running;
-    state.lastCycle = state.running ? performance.now() : 0;
     lastFrame = 0;
     syncPlaybackControls();
     scheduleRender();
@@ -376,7 +434,7 @@ function wireUi() {
 
   cycleBtn.addEventListener("click", () => {
     state.cycleMs = state.cycleMs > 0 ? 0 : cyclePreferenceMs;
-    state.lastCycle = performance.now();
+    state.cycleElapsed = 0;
     syncPlaybackControls();
     writeHash(window, state);
     ensureAnimationLoop(true);
@@ -407,11 +465,12 @@ function wireUi() {
   cycleRateSlider = document.getElementById("cycle-rate");
   cycleRateOut = document.getElementById("cycle-rate-out");
   cycleRateSlider.addEventListener("input", () => {
+    const previousDuration = state.cycleMs;
     cyclePreferenceMs = Number(cycleRateSlider.value) * 1000;
     cycleRateOut.textContent = `${cyclePreferenceMs / 1000} sec`;
     if (state.cycleMs > 0) {
       state.cycleMs = cyclePreferenceMs;
-      state.lastCycle = performance.now();
+      state.cycleElapsed = previousDuration ? state.cycleElapsed / previousDuration * state.cycleMs : 0;
       writeHash(window, state);
     }
   });
@@ -437,6 +496,14 @@ function wireUi() {
   document.getElementById("btn-close-settings").addEventListener("click", () => setPanelOpen(false));
   document.getElementById("panel-scrim").addEventListener("click", () => setPanelOpen(false));
   compactControls.addEventListener("change", event => setPanelOpen(!event.matches));
+  document.getElementById("panel-right").addEventListener("keydown", event => {
+    if (event.key !== "Tab" || !compactControls.matches) return;
+    const controls = [...event.currentTarget.querySelectorAll("button, input, select")].filter(element => !element.disabled);
+    const first = controls[0];
+    const last = controls.at(-1);
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  });
 
   gallery.addEventListener("wheel", event => {
     if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
@@ -447,6 +514,10 @@ function wireUi() {
   wireCanvasGestures();
 
   window.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      setPanelOpen(false);
+      return;
+    }
     if (event.target.closest?.("input, select, button, [contenteditable]")) return;
     if (event.key === " ") { event.preventDefault(); pauseBtn.click(); }
     else if (event.key === "ArrowRight") setMode(state.mode + 1);
@@ -455,7 +526,6 @@ function wireUi() {
     else if (event.key.toLowerCase() === "s") saveBtn.click();
     else if (event.key.toLowerCase() === "c") cycleBtn.click();
     else if (event.key.toLowerCase() === "f") settingsButton.click();
-    else if (event.key === "Escape") setPanelOpen(false);
     else if (event.key >= "0" && event.key <= "9") setMode(Number(event.key));
   });
 
@@ -463,8 +533,15 @@ function wireUi() {
   window.visualViewport?.addEventListener("resize", fitMain);
   document.addEventListener("visibilitychange", () => {
     lastFrame = 0;
-    state.lastCycle = document.hidden ? 0 : performance.now();
     if (!document.hidden) ensureAnimationLoop(true);
+  });
+  prefersReducedMotion.addEventListener("change", event => {
+    if (!event.matches || !state.running) return;
+    state.running = false;
+    lastFrame = 0;
+    syncPlaybackControls();
+    scheduleRender();
+    showToast("Motion paused");
   });
 
   window.addEventListener("hashchange", () => {
@@ -472,7 +549,8 @@ function wireUi() {
     readHash(location, state, MODES.length, PALETTES.length);
     applyStateToControls();
     if (state.palette !== previousPalette) renderGallery();
-    state.lastCycle = performance.now();
+    state.cycleElapsed = 0;
+    cycleProgress.style.transform = "scaleX(0)";
     updateGallerySelection(true);
     scheduleRender();
     ensureAnimationLoop(true);

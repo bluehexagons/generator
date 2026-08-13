@@ -9,7 +9,7 @@
     <script type="module" src="script.js"></script>
   </head>
   <body>
-    <canvas id="main" aria-label="Animated plasma artwork. Tap to randomize, drag to scrub the seed, or swipe to change modes."></canvas>
+    <canvas id="main" role="img" aria-label="Animated plasma artwork"></canvas>
 
     <div class="ambient-grain" aria-hidden="true"></div>
 
@@ -31,16 +31,16 @@
         </div>
       </header>
 
-      <div class="hud top-right" aria-label="Artwork actions">
-        <button id="btn-random" title="New seed (R)"><span class="button-icon" aria-hidden="true">✦</span><span class="button-label">Randomize</span></button>
-        <button id="btn-save" title="Download PNG (S)"><span class="button-icon" aria-hidden="true">↓</span><span class="button-label">Save</span></button>
-        <button id="btn-share" title="Copy deep link"><span class="button-icon" aria-hidden="true">↗</span><span class="button-label">Share</span></button>
+      <div class="hud top-right" role="group" aria-label="Artwork actions">
+        <button id="btn-random" aria-label="Randomize seed" title="New seed (R)"><span class="button-icon" aria-hidden="true">✦</span><span class="button-label">Randomize</span></button>
+        <button id="btn-save" aria-label="Save PNG" title="Download PNG (S)"><span class="button-icon" aria-hidden="true">↓</span><span class="button-label">Save</span></button>
+        <button id="btn-share" aria-label="Share this scene" title="Share this scene"><span class="button-icon" aria-hidden="true">↗</span><span class="button-label">Share</span></button>
         <button id="btn-settings" class="settings-button" aria-label="Open controls" aria-controls="panel-right" aria-expanded="false" title="Open controls"><span aria-hidden="true">☷</span><span class="button-label">Controls</span></button>
       </div>
     </div>
 
     <div id="panel-scrim" class="panel-scrim" aria-hidden="true"></div>
-    <aside class="hud right" id="panel-right" aria-label="Generator controls">
+    <aside class="hud right" id="panel-right" aria-label="Generator controls" aria-hidden="true">
       <div class="panel-heading">
         <span>Controls</span>
         <button id="btn-close-settings" class="close-button" aria-label="Close controls">×</button>
@@ -79,13 +79,13 @@
     </aside>
 
     <div class="bottom-deck">
-      <div class="hud transport" aria-label="Playback controls">
+      <div class="hud transport" role="group" aria-label="Playback controls">
         <div class="transport-buttons">
           <button id="btn-prev" class="icon-button" aria-label="Previous scene" title="Previous scene (←)">‹</button>
           <button id="btn-pause" class="play-button" aria-label="Pause animation" aria-pressed="false" title="Pause animation (Space)"><span class="button-icon" aria-hidden="true">Ⅱ</span><span class="button-label">Pause</span></button>
           <button id="btn-next" class="icon-button" aria-label="Next scene" title="Next scene (→)">›</button>
         </div>
-        <button id="btn-cycle" class="cycle-button" aria-pressed="false" title="Auto-cycle scenes (C)"><span class="button-icon" aria-hidden="true">↻</span><span class="button-label">Auto</span></button>
+        <button id="btn-cycle" class="cycle-button" aria-label="Auto-play scenes" aria-pressed="false" title="Auto-play scenes (C)"><span class="button-icon" aria-hidden="true">↻</span><span class="button-label">Auto</span></button>
         <div class="cycle-meter" aria-hidden="true"><span id="cycle-progress"></span></div>
       </div>
       <nav id="gallery" class="hud gallery" aria-label="Render scenes"></nav>
