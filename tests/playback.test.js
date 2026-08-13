@@ -42,3 +42,11 @@ test("clock ignores backwards timestamps", () => {
   assert.equal(tick.elapsedMs, 0);
   assert.equal(tick.clock.timeSinceRender, 10);
 });
+
+test("clock handles a real zero timestamp without losing the next interval", () => {
+  let clock = createClock();
+  clock = tickClock(clock, 0).clock;
+  const tick = tickClock(clock, 16);
+
+  assert.equal(tick.elapsedMs, 16);
+});

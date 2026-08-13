@@ -64,6 +64,25 @@ export function createUi(document, { modes, palettes, prefersReducedMotion, comp
     elements.modeCount.textContent = `${String(state.mode + 1).padStart(2, "0")} / ${String(modes.length).padStart(2, "0")}`;
   }
 
+  function setPaletteValue(value) {
+    elements.paletteSelect.value = value;
+  }
+
+  function setPixelSizeValue(value) {
+    elements.sizeSlider.value = value;
+    elements.sizeOutput.textContent = value;
+  }
+
+  function setMotionValue(value) {
+    elements.motionSlider.value = value;
+    elements.motionOutput.textContent = formatMotion(value);
+  }
+
+  function setCycleRateValue(cyclePreferenceMs) {
+    elements.cycleRateSlider.value = cyclePreferenceMs / 1000;
+    elements.cycleRateOutput.textContent = `${cyclePreferenceMs / 1000} sec`;
+  }
+
   function syncPlaybackControls(state) {
     const paused = !state.running;
     const cycling = state.cycleMs > 0;
@@ -90,13 +109,10 @@ export function createUi(document, { modes, palettes, prefersReducedMotion, comp
   }
 
   function applyStateToControls(state, cyclePreferenceMs) {
-    elements.paletteSelect.value = state.palette;
-    elements.sizeSlider.value = state.pixelSize;
-    elements.sizeOutput.textContent = state.pixelSize;
-    elements.motionSlider.value = state.motion;
-    elements.motionOutput.textContent = formatMotion(state.motion);
-    elements.cycleRateSlider.value = cyclePreferenceMs / 1000;
-    elements.cycleRateOutput.textContent = `${cyclePreferenceMs / 1000} sec`;
+    setPaletteValue(state.palette);
+    setPixelSizeValue(state.pixelSize);
+    setMotionValue(state.motion);
+    setCycleRateValue(cyclePreferenceMs);
     syncPlaybackControls(state);
   }
 
@@ -193,6 +209,10 @@ export function createUi(document, { modes, palettes, prefersReducedMotion, comp
     renderGallery,
     updateGallerySelection,
     syncHud,
+    setPaletteValue,
+    setPixelSizeValue,
+    setMotionValue,
+    setCycleRateValue,
     syncPlaybackControls,
     applyStateToControls,
     setCycleProgress,

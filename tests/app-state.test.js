@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  advanceFrame,
   advancePlayback,
   createInitialState,
   effectivePixelSize,
@@ -42,6 +43,17 @@ test("playback advances multiple scenes and wraps its seed", () => {
   assert.equal(result.state.seed, 0.25);
   assert.equal(result.state.cycleElapsed, 500);
   assert.equal(state.mode, 3);
+});
+
+test("advanceFrame reports one render decision while applying cycle and motion together", () => {
+  const state = { ...createInitialState({ seed: 0.25 }), cycleMs: 1000, motion: 24 };
+  const result = advanceFrame(state, 1000, 20, 1000 / 30, 20, () => 0.5);
+
+  assert.equal(result.sceneChanged, true);
+  assert.equal(result.renderRequested, true);
+  assert.equal(result.state.mode, 4);
+  assert.ok(result.state.seed > 0.5);
+  assert.equal(result.state.cycleElapsed, 0);
 });
 
 test("playback applies motion only for a render interval and not while scrubbing", () => {

@@ -19,6 +19,18 @@ test("writeHash serializes the shareable state", () => {
   assert.equal(replacement, "#mode=4&seed=0.123457&size=3&palette=2&motion=-28&cycle=7");
 });
 
+test("writeHash uses stable scene IDs when supplied", () => {
+  const location = { hash: "" };
+  let replacement;
+  const history = { replaceState: (_state, _title, hash) => { replacement = hash; } };
+
+  writeHash({ location, history }, { mode: 4, seed: 0.123456789, pixelSize: 3, palette: 2, motion: -28, cycleMs: 7000 }, [
+    "gradient", "diagonal-bands", "scanline-sweep", "rgb-quadrants", "radial-fade",
+  ]);
+
+  assert.equal(replacement, "#mode=radial-fade&seed=0.123457&size=3&palette=2&motion=-28&cycle=7");
+});
+
 test("parseHash returns a validated partial state without mutating anything", () => {
   assert.deepEqual(parseHash("#mode=4&seed=-0.25&size=3&palette=2&motion=-28&cycle=7", 20, 5), {
     mode: 4,
@@ -29,6 +41,7 @@ test("parseHash returns a validated partial state without mutating anything", ()
     cycleMs: 7000,
   });
   assert.deepEqual(parseHash("", 20, 5), {});
+  assert.deepEqual(parseHash("#mode=radial-fade", 20, 5, ["gradient", "radial-fade"]), { mode: 1 });
 });
 
 test("serializeHash is independent of browser history", () => {

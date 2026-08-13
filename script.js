@@ -3,10 +3,9 @@
 import { MODES, PALETTES } from "./algorithms.js";
 import {
   DEFAULT_CYCLE_MS,
-  advancePlayback,
+  advanceFrame,
   createInitialState,
   effectivePixelSize,
-  formatMotion,
   isPlaybackActive,
   resizeCycle,
   withCycle,
@@ -19,16 +18,27 @@ import {
 } from "./app-state.js";
 import { renderTo } from "./renderer.js";
 import {
+  ANIMATION_FRAME_MS,
   consumeRenderTime,
   createClock,
   resetClock,
-  shouldRender,
   tickClock,
 } from "./playback.js";
-import { normalizeSeed, PIXEL_SIZE_MAX, PIXEL_SIZE_MIN, readHash, writeHash } from "./url-state.js";
+import {
+  CYCLE_SECONDS_MAX,
+  CYCLE_SECONDS_MIN,
+  MOTION_MAX,
+  MOTION_MIN,
+  normalizeSeed,
+  PIXEL_SIZE_MAX,
+  PIXEL_SIZE_MIN,
+  readHash,
+  writeHash,
+} from "./url-state.js";
 import { createUi } from "./ui.js";
 
 const MAX_DEVICE_PIXEL_RATIO = 1.5;
+const MODE_IDS = MODES.map(mode => mode.id);
 const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const compactControls = window.matchMedia("(max-width: 980px)");
 
@@ -38,6 +48,10 @@ let clock = createClock();
 let animationFrameId = 0;
 let renderScheduled = false;
 let cyclePreferenceMs = DEFAULT_CYCLE_MS;
+
+function writeCurrentHash() {
+  writeHash(window, state, MODE_IDS);
+}
 
 function fitMain() {
   const { main } = ui.elements;
@@ -85,20 +99,21 @@ function loop(timestamp) {
   const tick = tickClock(clock, timestamp);
   clock = tick.clock;
 
-  const playback = advancePlayback(state, tick.elapsedMs, 0, MODES.length);
+  const playback = advanceFrame(state, tick.elapsedMs, clock.timeSinceRender, ANIMATION_FRAME_MS, MODES.length);
   state = playback.state;
-  ui.setCycleProgress(state.cycleMs ? state.cycleElapsed / state.cycleMs : 0);
 
   if (playback.sceneChanged) {
     ui.updateGallerySelection(state.mode, true);
-    ui.setCycleProgress(state.cycleMs ? state.cycleElapsed / state.cycleMs : 0);
-    writeHash(window, state);
+    writeCurrentHash();
   }
 
-  if (shouldRender(clock, playback.sceneChanged)) {
+  if (state.cycleMs > 0) {
+    ui.setCycleProgress(state.cycleElapsed / state.cycleMs);
+  }
+
+  if (playback.renderRequested) {
     const consumed = consumeRenderTime(clock);
     clock = consumed.clock;
-    state = advancePlayback(state, 0, consumed.elapsedMs, MODES.length).state;
     scheduleRender();
   }
 
@@ -109,16 +124,16 @@ function setMode(mode, { announce = true, scroll = true } = {}) {
   state = withMode(state, mode, MODES.length);
   ui.setCycleProgress(0);
   ui.updateGallerySelection(state.mode, scroll);
-  writeHash(window, state);
+  writeCurrentHash();
   scheduleRender();
   if (announce) ui.showToast(MODES[state.mode].name);
 }
 
 function setPalette(palette) {
   state = withPalette(state, palette, PALETTES.length);
-  ui.elements.paletteSelect.value = state.palette;
+  ui.setPaletteValue(state.palette);
   ui.renderGallery(state.palette);
-  writeHash(window, state);
+  writeCurrentHash();
   scheduleRender();
   ui.showToast(`${PALETTES[state.palette].name} palette`);
 }
@@ -126,7 +141,7 @@ function setPalette(palette) {
 function setSeed(seed, announce = false) {
   state = withSeed(state, seed);
   ui.setCycleProgress(0);
-  writeHash(window, state);
+  writeCurrentHash();
   scheduleRender();
   if (announce) ui.showToast(`Seed ${state.seed.toFixed(4)}`);
 }
@@ -178,7 +193,7 @@ function wireCanvasGestures() {
     if (isSwipe) setMode(state.mode + (dx < 0 ? 1 : -1));
     else if (isTap) randomizeSeed();
     else if (!wasTouch) {
-      writeHash(window, state);
+      writeCurrentHash();
       ui.showToast(`Seed ${state.seed.toFixed(4)}`);
     }
     gesture = null;
@@ -191,7 +206,7 @@ function wireCanvasGestures() {
     if (!gesture || gesture.id !== event.pointerId) return;
     state = { ...state, scrubbing: false };
     main.classList.remove("is-scrubbing");
-    if (gesture.type !== "touch" && gesture.moved) writeHash(window, state);
+    if (gesture.type !== "touch" && gesture.moved) writeCurrentHash();
     gesture = null;
     scheduleRender();
     ensureAnimationLoop(true);
@@ -259,11 +274,8 @@ function wireUi() {
     nextButton,
     cycleButton,
     sizeSlider,
-    sizeOutput,
     motionSlider,
-    motionOutput,
     cycleRateSlider,
-    cycleRateOutput,
     paletteSelect,
     seedInput,
     gallery,
@@ -275,7 +287,7 @@ function wireUi() {
   saveButton.addEventListener("click", savePng);
 
   shareButton.addEventListener("click", async () => {
-    writeHash(window, state);
+    writeCurrentHash();
     try {
       if (navigator.share && matchMedia("(pointer: coarse)").matches) {
         try {
@@ -304,34 +316,38 @@ function wireUi() {
   cycleButton.addEventListener("click", () => {
     state = withCycle(state, state.cycleMs > 0 ? 0 : cyclePreferenceMs);
     ui.syncPlaybackControls(state);
-    writeHash(window, state);
+    writeCurrentHash();
     ensureAnimationLoop(true);
   });
 
   sizeSlider.min = PIXEL_SIZE_MIN;
   sizeSlider.max = PIXEL_SIZE_MAX;
+  motionSlider.min = MOTION_MIN;
+  motionSlider.max = MOTION_MAX;
+  cycleRateSlider.min = CYCLE_SECONDS_MIN;
+  cycleRateSlider.max = CYCLE_SECONDS_MAX;
   sizeSlider.addEventListener("input", () => {
     state = withPixelSize(state, Number(sizeSlider.value), PIXEL_SIZE_MIN, PIXEL_SIZE_MAX);
-    sizeOutput.textContent = state.pixelSize;
-    writeHash(window, state);
+    ui.setPixelSizeValue(state.pixelSize);
+    writeCurrentHash();
     scheduleRender();
   });
 
   motionSlider.addEventListener("input", () => {
-    state = withMotion(state, Number(motionSlider.value), -100, 100);
-    motionOutput.textContent = formatMotion(state.motion);
+    state = withMotion(state, Number(motionSlider.value), MOTION_MIN, MOTION_MAX);
+    ui.setMotionValue(state.motion);
     ui.syncPlaybackControls(state);
-    writeHash(window, state);
+    writeCurrentHash();
     scheduleRender();
     ensureAnimationLoop(true);
   });
 
   cycleRateSlider.addEventListener("input", () => {
     cyclePreferenceMs = Number(cycleRateSlider.value) * 1000;
-    cycleRateOutput.textContent = `${cyclePreferenceMs / 1000} sec`;
+    ui.setCycleRateValue(cyclePreferenceMs);
     if (state.cycleMs > 0) {
       state = resizeCycle(state, cyclePreferenceMs);
-      writeHash(window, state);
+      writeCurrentHash();
     }
   });
 
@@ -396,7 +412,7 @@ function wireUi() {
 
   window.addEventListener("hashchange", () => {
     const previousPalette = state.palette;
-    readHash(location, state, MODES.length, PALETTES.length);
+    readHash(location, state, MODES.length, PALETTES.length, MODE_IDS);
     if (state.cycleMs > 0) cyclePreferenceMs = state.cycleMs;
     ui.applyStateToControls(state, cyclePreferenceMs);
     if (state.palette !== previousPalette) ui.renderGallery(state.palette);
@@ -417,7 +433,7 @@ function setPanelOpen(open) {
 
 window.addEventListener("DOMContentLoaded", () => {
   state = createInitialState({ reducedMotion: prefersReducedMotion.matches });
-  readHash(location, state, MODES.length, PALETTES.length);
+  readHash(location, state, MODES.length, PALETTES.length, MODE_IDS);
   if (state.cycleMs > 0) cyclePreferenceMs = state.cycleMs;
   ui = createUi(document, { modes: MODES, palettes: PALETTES, prefersReducedMotion, compactControls });
   wireUi();

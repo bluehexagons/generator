@@ -71,16 +71,17 @@ export function resizeCycle(state, cycleMs) {
 }
 
 /**
- * Advance playback state without touching the DOM or a clock. `motionElapsedMs`
- * is zero until the caller decides that another image should be rendered.
+ * Advance one animation frame without touching the DOM. Cycling always uses
+ * the elapsed frame time; motion advances only when this frame is renderable.
  */
-export function advancePlayback(state, elapsedMs, motionElapsedMs, modeCount, random = Math.random) {
+export function advanceFrame(state, elapsedMs, accumulatedRenderMs, renderIntervalMs, modeCount, random = Math.random) {
   const elapsed = Number.isFinite(elapsedMs) ? Math.max(0, elapsedMs) : 0;
-  const motionElapsed = Number.isFinite(motionElapsedMs) ? Math.max(0, motionElapsedMs) : 0;
+  const renderElapsed = Number.isFinite(accumulatedRenderMs) ? Math.max(0, accumulatedRenderMs) : 0;
+  const renderInterval = Number.isFinite(renderIntervalMs) ? Math.max(0, renderIntervalMs) : 0;
   let next = { ...state };
   let sceneChanged = false;
 
-  if (!next.running) return { state: next, sceneChanged };
+  if (!next.running) return { state: next, sceneChanged, renderRequested: false };
 
   if (next.cycleMs > 0) {
     next.cycleElapsed += elapsed;
@@ -93,11 +94,21 @@ export function advancePlayback(state, elapsedMs, motionElapsedMs, modeCount, ra
     }
   }
 
-  if (next.motion !== 0 && !next.scrubbing && motionElapsed > 0) {
-    next.seed = normalizeSeed(next.seed + motionDelta(next.motion) * (motionElapsed / 16));
+  const renderRequested = sceneChanged || renderElapsed >= renderInterval;
+  if (renderRequested && next.motion !== 0 && !next.scrubbing && renderElapsed > 0) {
+    next.seed = normalizeSeed(next.seed + motionDelta(next.motion) * (renderElapsed / 16));
   }
 
-  return { state: next, sceneChanged };
+  return { state: next, sceneChanged, renderRequested };
+}
+
+/**
+ * Compatibility helper for callers that already decide when motion time is
+ * consumed. New animation loops should use `advanceFrame`.
+ */
+export function advancePlayback(state, elapsedMs, motionElapsedMs, modeCount, random = Math.random) {
+  const result = advanceFrame(state, elapsedMs, motionElapsedMs, 0, modeCount, random);
+  return { state: result.state, sceneChanged: result.sceneChanged };
 }
 
 export function isPlaybackActive(state) {

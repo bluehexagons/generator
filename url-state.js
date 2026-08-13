@@ -9,14 +9,15 @@ function clampInteger(value, min, max) {
   return Math.max(min, Math.min(max, Math.trunc(value)));
 }
 
-export function serializeHash(state) {
+export function serializeHash(state, modeIds = []) {
   const motion = clampInteger(state.motion ?? 0, MOTION_MIN, MOTION_MAX);
   const cycleSeconds = state.cycleMs ? clampInteger(state.cycleMs / 1000, CYCLE_SECONDS_MIN, CYCLE_SECONDS_MAX) : 0;
-  return `#mode=${state.mode}&seed=${state.seed.toFixed(6)}&size=${state.pixelSize}&palette=${state.palette}&motion=${motion}&cycle=${cycleSeconds}`;
+  const mode = modeIds[state.mode] ?? state.mode;
+  return `#mode=${encodeURIComponent(mode)}&seed=${state.seed.toFixed(6)}&size=${state.pixelSize}&palette=${state.palette}&motion=${motion}&cycle=${cycleSeconds}`;
 }
 
-export function writeHash({ location, history }, state) {
-  const hash = serializeHash(state);
+export function writeHash({ location, history }, state, modeIds = []) {
+  const hash = serializeHash(state, modeIds);
   if (location.hash !== hash) history.replaceState(null, "", hash);
 }
 
@@ -32,12 +33,16 @@ export function normalizeSeed(value) {
   return ((value % 1) + 1) % 1;
 }
 
-export function parseHash(hash, modeCount, paletteCount) {
+export function parseHash(hash, modeCount, paletteCount, modeIds = []) {
   const value = String(hash ?? "").replace(/^#/, "");
   if (!value) return {};
 
   const params = new URLSearchParams(value);
-  const mode = readNumber(params, "mode");
+  const modeValue = params.get("mode")?.trim() ?? "";
+  const numericMode = modeValue === "" ? null : Number(modeValue);
+  const mode = Number.isFinite(numericMode)
+    ? clampInteger(numericMode, 0, modeCount - 1)
+    : modeIds.indexOf(modeValue);
   const seed = readNumber(params, "seed");
   const size = readNumber(params, "size");
   const palette = readNumber(params, "palette");
@@ -45,7 +50,7 @@ export function parseHash(hash, modeCount, paletteCount) {
   const cycle = readNumber(params, "cycle");
 
   return {
-    ...(mode !== null && { mode: clampInteger(mode, 0, modeCount - 1) }),
+    ...(mode >= 0 && { mode }),
     ...(seed !== null && { seed: normalizeSeed(seed) }),
     ...(size !== null && { pixelSize: clampInteger(size, PIXEL_SIZE_MIN, PIXEL_SIZE_MAX) }),
     ...(palette !== null && { palette: clampInteger(palette, 0, paletteCount - 1) }),
@@ -54,6 +59,6 @@ export function parseHash(hash, modeCount, paletteCount) {
   };
 }
 
-export function readHash(location, state, modeCount, paletteCount) {
-  Object.assign(state, parseHash(location.hash, modeCount, paletteCount));
+export function readHash(location, state, modeCount, paletteCount, modeIds = []) {
+  Object.assign(state, parseHash(location.hash, modeCount, paletteCount, modeIds));
 }
