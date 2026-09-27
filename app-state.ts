@@ -38,9 +38,9 @@ export function motionDelta(value: number) {
   return sign * magnitude * magnitude * 0.02;
 }
 
-export function formatMotion(value: number) {
+export function formatMotion(value: number, scale = 1) {
   if (value === 0) return "still";
-  const speed = Math.abs(motionDelta(value) / motionDelta(DEFAULT_MOTION));
+  const speed = Math.abs((motionDelta(value) * scale) / motionDelta(DEFAULT_MOTION));
   const prefix = value < 0 ? "−" : "";
   return `${prefix}${speed < 10 ? speed.toFixed(1) : Math.round(speed)}×`;
 }

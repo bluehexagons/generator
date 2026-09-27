@@ -35,7 +35,7 @@ Run `npm run format` to apply Oxfmt, or use `npm run typecheck`, `npm run lint`,
 - Use the transport to pause, move through scenes in order, or start a procedural showcase that avoids recently shown scenes.
 - Adjust motion speed in either direction, scene duration, pixel size, and palette in the controls panel.
 - Press `R` for a new seed, `Space` to play or pause, `C` to toggle auto-play, `S` to save, `F` to open the controls, or `G` to toggle fullscreen.
-- Enable “Hide UI when idle” in the controls to fade the interface after a few seconds without pointer or keyboard activity.
+- Enable “Hide UI when idle” in the controls to fade the interface after a few seconds without pointer or keyboard activity. The choice is remembered in this browser.
 - Share copies a link containing the scene, seed, palette, pixel size, and playback settings.
 
 Animation renders at a slightly coarser resolution when a high-density display would make full-resolution frames too expensive. Pausing returns to the requested pixel size, and PNG exports always use that requested size.

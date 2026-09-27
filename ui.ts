@@ -87,6 +87,7 @@ export function createUi(
     elements.modeNote.textContent = mode.note;
     elements.seedReadout.textContent = state.seed.toFixed(6);
     elements.modeCount.textContent = `${String(state.mode + 1).padStart(2, "0")} / ${String(modes.length).padStart(2, "0")}`;
+    setMotionValue(state.motion, mode.motionScale);
   }
 
   function setPaletteValue(value: number) {
@@ -98,9 +99,9 @@ export function createUi(
     elements.sizeOutput.textContent = String(value);
   }
 
-  function setMotionValue(value: number) {
+  function setMotionValue(value: number, scale = 1) {
     elements.motionSlider.value = String(value);
-    elements.motionOutput.textContent = formatMotion(value);
+    elements.motionOutput.textContent = formatMotion(value, scale);
   }
 
   function setCycleRateValue(cyclePreferenceMs: number) {

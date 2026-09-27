@@ -38,6 +38,7 @@ import { createUi } from "./ui.ts";
 
 const MAX_DEVICE_PIXEL_RATIO = 1.5;
 const MODE_IDS = MODES.map((mode) => mode.id);
+const HIDE_UI_STORAGE_KEY = "plasma-generator:hide-ui";
 const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const compactControls = window.matchMedia("(max-width: 980px)");
 
@@ -145,6 +146,14 @@ function toggleFullscreen() {
     ? document.exitFullscreen()
     : document.documentElement.requestFullscreen();
   void change.catch(() => ui.showToast("Fullscreen unavailable"));
+}
+
+function readHideUiPreference() {
+  try {
+    return window.localStorage.getItem(HIDE_UI_STORAGE_KEY) === "true";
+  } catch {
+    return false;
+  }
 }
 
 function hasActivePlayback() {
@@ -385,8 +394,15 @@ function wireUi() {
   randomButton.addEventListener("click", randomizeSeed);
   fullscreenButton.addEventListener("click", toggleFullscreen);
   showcaseButton.addEventListener("click", () => setShowcase(!showcaseActive));
+  hideUiWhenIdle = readHideUiPreference();
+  hideUiInput.checked = hideUiWhenIdle;
   hideUiInput.addEventListener("change", () => {
     hideUiWhenIdle = hideUiInput.checked;
+    try {
+      window.localStorage.setItem(HIDE_UI_STORAGE_KEY, String(hideUiWhenIdle));
+    } catch {
+      // Keep the toggle usable when browser storage is unavailable.
+    }
     armIdleUiTimer();
   });
   previousButton.addEventListener("click", () => setMode(state.mode - 1));
