@@ -40,11 +40,16 @@
       </header>
 
       <div class="hud top-right" role="group" aria-label="Artwork actions">
-        <button id="btn-random" aria-label="Randomize seed" title="New seed (R)">
+        <button
+          id="btn-random"
+          aria-label="Randomize seed"
+          aria-keyshortcuts="R"
+          title="New seed (R)"
+        >
           <span class="button-icon" aria-hidden="true">✦</span
           ><span class="button-label">Randomize</span>
         </button>
-        <button id="btn-save" aria-label="Save PNG" title="Download PNG (S)">
+        <button id="btn-save" aria-label="Save PNG" aria-keyshortcuts="S" title="Download PNG (S)">
           <span class="button-icon" aria-hidden="true">↓</span
           ><span class="button-label">Save</span>
         </button>
@@ -52,7 +57,12 @@
           <span class="button-icon" aria-hidden="true">↗</span
           ><span class="button-label">Share</span>
         </button>
-        <button id="btn-fullscreen" aria-label="Enter fullscreen" title="Fullscreen (G)">
+        <button
+          id="btn-fullscreen"
+          aria-label="Enter fullscreen"
+          aria-keyshortcuts="G"
+          title="Fullscreen (G)"
+        >
           <span class="button-icon" aria-hidden="true">⛶</span
           ><span class="button-label">Fullscreen</span>
         </button>
@@ -62,6 +72,7 @@
           aria-label="Open controls"
           aria-controls="panel-right"
           aria-expanded="false"
+          aria-keyshortcuts="F"
           title="Open controls"
         >
           <span aria-hidden="true">☷</span><span class="button-label">Controls</span>
@@ -117,7 +128,8 @@
       </div>
       <div class="hint">
         <kbd>←</kbd>/<kbd>→</kbd> scene · <kbd>R</kbd> seed · <kbd>Space</kbd> play ·
-        <kbd>C</kbd> cycle · <kbd>S</kbd> save · <kbd>F</kbd> controls · <kbd>G</kbd> fullscreen
+        <kbd>C</kbd> cycle · <kbd>S</kbd> save · <kbd>F</kbd> controls · <kbd>G</kbd> fullscreen ·
+        <kbd>1</kbd>–<kbd>9</kbd>/<kbd>0</kbd> scenes 1–10
       </div>
     </aside>
 
@@ -128,6 +140,7 @@
             id="btn-prev"
             class="icon-button"
             aria-label="Previous scene"
+            aria-keyshortcuts="ArrowLeft"
             title="Previous scene (←)"
           >
             ‹
@@ -136,12 +149,19 @@
             id="btn-pause"
             class="play-button"
             aria-label="Pause animation"
+            aria-keyshortcuts="Space"
             title="Pause animation (Space)"
           >
             <span class="button-icon" aria-hidden="true">Ⅱ</span
             ><span class="button-label">Pause</span>
           </button>
-          <button id="btn-next" class="icon-button" aria-label="Next scene" title="Next scene (→)">
+          <button
+            id="btn-next"
+            class="icon-button"
+            aria-label="Next scene"
+            aria-keyshortcuts="ArrowRight"
+            title="Next scene (→)"
+          >
             ›
           </button>
         </div>
@@ -150,6 +170,7 @@
           class="cycle-button"
           aria-label="Auto-play scenes"
           aria-pressed="false"
+          aria-keyshortcuts="C"
           title="Auto-play scenes (C)"
         >
           <span class="button-icon" aria-hidden="true">↻</span

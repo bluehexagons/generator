@@ -32,6 +32,7 @@ Run `npm run format` to apply Oxfmt, or use `npm run typecheck`, `npm run lint`,
 - Tap the artwork for a new seed.
 - Drag left or right to scrub through seeds.
 - Swipe on a touch screen, use the arrow keys, or choose a thumbnail to change scenes.
+- In the scene gallery, use the arrow keys to move between scenes and Home/End to jump to the first or last scene. Number keys `1`–`9` and `0` select scenes 1–10.
 - Use the transport to pause, move through scenes in order, or start a procedural showcase that avoids recently shown scenes.
 - Adjust motion speed in either direction, scene duration, pixel size, and palette in the controls panel.
 - Press `R` for a new seed, `Space` to play or pause, `C` to toggle auto-play, `S` to save, `F` to open the controls, or `G` to toggle fullscreen.

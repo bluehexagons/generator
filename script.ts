@@ -555,26 +555,41 @@ function wireUi() {
   ui.syncFullscreen();
 
   window.addEventListener("keydown", (event) => {
+    if (
+      event.defaultPrevented ||
+      event.isComposing ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.altKey
+    )
+      return;
     if (event.key === "Escape") {
       setPanelOpen(false);
       return;
     }
-    if (
-      event.target instanceof Element &&
-      event.target.closest("input, select, button, [contenteditable]")
-    )
+    const target = event.target;
+    if (target instanceof Element && target.closest("input, select, textarea, [contenteditable]"))
+      return;
+    if (target instanceof Element && target.closest("button") && [" ", "Enter"].includes(event.key))
       return;
     if (event.key === " ") {
       event.preventDefault();
       pauseButton.click();
-    } else if (event.key === "ArrowRight") setMode(state.mode + 1);
-    else if (event.key === "ArrowLeft") setMode(state.mode - 1);
-    else if (event.key.toLowerCase() === "r") randomizeSeed();
+    } else if (event.key === "ArrowRight") {
+      event.preventDefault();
+      setMode(state.mode + 1);
+    } else if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      setMode(state.mode - 1);
+    } else if (event.key.toLowerCase() === "r") randomizeSeed();
     else if (event.key.toLowerCase() === "s") saveButton.click();
     else if (event.key.toLowerCase() === "c") cycleButton.click();
     else if (event.key.toLowerCase() === "f") settingsButton.click();
     else if (event.key.toLowerCase() === "g") fullscreenButton.click();
-    else if (event.key >= "0" && event.key <= "9") setMode(Number(event.key));
+    else if (event.key >= "0" && event.key <= "9") {
+      const digit = Number(event.key);
+      setMode(digit === 0 ? 9 : digit - 1);
+    }
   });
 
   window.addEventListener("resize", fitMain);
