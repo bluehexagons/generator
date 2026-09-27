@@ -1,9 +1,24 @@
-import { normalizeSeed } from "./url-state.js";
+import { normalizeSeed } from "./url-state.ts";
+
+export type AppState = {
+  mode: number;
+  seed: number;
+  palette: number;
+  pixelSize: number;
+  motion: number;
+  cycleMs: number;
+  cycleElapsed: number;
+  running: boolean;
+  scrubbing: boolean;
+};
 
 export const DEFAULT_CYCLE_MS = 6000;
 export const DEFAULT_MOTION = 24;
 
-export function createInitialState({ seed = Math.random(), reducedMotion = false } = {}) {
+export function createInitialState({
+  seed = Math.random(),
+  reducedMotion = false,
+}: { seed?: number; reducedMotion?: boolean } = {}): AppState {
   return {
     mode: 3,
     seed: normalizeSeed(seed),
@@ -17,56 +32,54 @@ export function createInitialState({ seed = Math.random(), reducedMotion = false
   };
 }
 
-export function motionDelta(value) {
+export function motionDelta(value: number) {
   const sign = Math.sign(value);
   const magnitude = Math.abs(value) / 100;
   return sign * magnitude * magnitude * 0.02;
 }
 
-export function formatMotion(value) {
+export function formatMotion(value: number) {
   if (value === 0) return "still";
   const speed = Math.abs(motionDelta(value) / motionDelta(DEFAULT_MOTION));
   const prefix = value < 0 ? "−" : "";
   return `${prefix}${speed < 10 ? speed.toFixed(1) : Math.round(speed)}×`;
 }
 
-export function wrapMode(mode, modeCount) {
+export function wrapMode(mode: number, modeCount: number) {
   return ((mode % modeCount) + modeCount) % modeCount;
 }
 
-export function withMode(state, mode, modeCount) {
+export function withMode(state: AppState, mode: number, modeCount: number) {
   return { ...state, mode: wrapMode(mode, modeCount), cycleElapsed: 0 };
 }
 
-export function withSeed(state, seed) {
+export function withSeed(state: AppState, seed: number) {
   return { ...state, seed: normalizeSeed(seed), cycleElapsed: 0 };
 }
 
-export function withPalette(state, palette, paletteCount) {
+export function withPalette(state: AppState, palette: number, paletteCount: number) {
   return { ...state, palette: Math.max(0, Math.min(paletteCount - 1, palette | 0)) };
 }
 
-export function withPixelSize(state, pixelSize, min, max) {
+export function withPixelSize(state: AppState, pixelSize: number, min: number, max: number) {
   return { ...state, pixelSize: Math.max(min, Math.min(max, pixelSize | 0)) };
 }
 
-export function withMotion(state, motion, min, max) {
+export function withMotion(state: AppState, motion: number, min: number, max: number) {
   return { ...state, motion: Math.max(min, Math.min(max, motion | 0)) };
 }
 
-export function withRunning(state, running) {
+export function withRunning(state: AppState, running: boolean) {
   return { ...state, running: Boolean(running) };
 }
 
-export function withCycle(state, cycleMs) {
+export function withCycle(state: AppState, cycleMs: number) {
   return { ...state, cycleMs: Math.max(0, cycleMs | 0), cycleElapsed: 0 };
 }
 
-export function resizeCycle(state, cycleMs) {
+export function resizeCycle(state: AppState, cycleMs: number) {
   const previousDuration = state.cycleMs;
-  const elapsed = previousDuration
-    ? state.cycleElapsed / previousDuration * cycleMs
-    : 0;
+  const elapsed = previousDuration ? (state.cycleElapsed / previousDuration) * cycleMs : 0;
   return { ...state, cycleMs, cycleElapsed: elapsed };
 }
 
@@ -74,7 +87,14 @@ export function resizeCycle(state, cycleMs) {
  * Advance one animation frame without touching the DOM. Cycling always uses
  * the elapsed frame time; motion advances only when this frame is renderable.
  */
-export function advanceFrame(state, elapsedMs, accumulatedRenderMs, renderIntervalMs, modeCount, random = Math.random) {
+export function advanceFrame(
+  state: AppState,
+  elapsedMs: number,
+  accumulatedRenderMs: number,
+  renderIntervalMs: number,
+  modeCount: number,
+  random = Math.random,
+) {
   const elapsed = Number.isFinite(elapsedMs) ? Math.max(0, elapsedMs) : 0;
   const renderElapsed = Number.isFinite(accumulatedRenderMs) ? Math.max(0, accumulatedRenderMs) : 0;
   const renderInterval = Number.isFinite(renderIntervalMs) ? Math.max(0, renderIntervalMs) : 0;
@@ -106,18 +126,34 @@ export function advanceFrame(state, elapsedMs, accumulatedRenderMs, renderInterv
  * Compatibility helper for callers that already decide when motion time is
  * consumed. New animation loops should use `advanceFrame`.
  */
-export function advancePlayback(state, elapsedMs, motionElapsedMs, modeCount, random = Math.random) {
+export function advancePlayback(
+  state: AppState,
+  elapsedMs: number,
+  motionElapsedMs: number,
+  modeCount: number,
+  random = Math.random,
+) {
   const result = advanceFrame(state, elapsedMs, motionElapsedMs, 0, modeCount, random);
   return { state: result.state, sceneChanged: result.sceneChanged };
 }
 
-export function isPlaybackActive(state) {
+export function isPlaybackActive(state: AppState) {
   return state.running && (state.motion !== 0 || state.cycleMs > 0);
 }
 
-export function effectivePixelSize({ width, height, state, sampleBudget = 180000 }) {
+export function effectivePixelSize({
+  width,
+  height,
+  state,
+  sampleBudget = 180000,
+}: {
+  width: number;
+  height: number;
+  state: AppState;
+  sampleBudget?: number;
+}) {
   const isAnimating = (state.running && state.motion !== 0) || state.scrubbing;
   if (!isAnimating) return state.pixelSize;
-  const animationFloor = Math.max(1, Math.ceil(Math.sqrt(width * height / sampleBudget)));
+  const animationFloor = Math.max(1, Math.ceil(Math.sqrt((width * height) / sampleBudget)));
   return Math.max(animationFloor, state.pixelSize);
 }

@@ -1,15 +1,30 @@
 {
   "name": "plasma-generator",
   "version": "1.0.0",
-  "description": "A dependency-free, deterministic plasma image generator for the browser.",
   "private": true,
+  "description": "A deterministic plasma image generator for the browser.",
   "license": "Apache-2.0",
   "type": "module",
-  "engines": {
-    "node": ">=18.18"
-  },
   "scripts": {
-    "check": "node --check algorithms.js && node --check renderer.js && node --check url-state.js && node --check app-state.js && node --check playback.js && node --check ui.js && node --check script.js",
-    "test": "node --test"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint --deny-warnings .",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
+    "test": "tsx --test tests/*.test.js",
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm test && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "oxfmt": "^0.70.0",
+    "oxlint": "^1.85.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.1"
+  },
+  "engines": {
+    "node": ">=20.19"
   }
 }

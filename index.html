@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#080b10" />
     <title>Plasma Generator</title>
     <link rel="stylesheet" href="style.css" />
-    <script type="module" src="script.js"></script>
+    <script type="module" src="/script.ts"></script>
   </head>
   <body>
     <canvas id="main" role="img" aria-label="Animated plasma artwork"></canvas>
@@ -27,15 +27,39 @@
         <div class="seed-row">
           <span class="label">seed</span>
           <code id="seed-readout">—</code>
-          <input id="seed-input" type="text" aria-label="Set seed between 0 and 1" placeholder="set 0–1" inputmode="decimal" />
+          <input
+            id="seed-input"
+            type="text"
+            aria-label="Set seed between 0 and 1"
+            placeholder="set 0–1"
+            inputmode="decimal"
+          />
         </div>
       </header>
 
       <div class="hud top-right" role="group" aria-label="Artwork actions">
-        <button id="btn-random" aria-label="Randomize seed" title="New seed (R)"><span class="button-icon" aria-hidden="true">✦</span><span class="button-label">Randomize</span></button>
-        <button id="btn-save" aria-label="Save PNG" title="Download PNG (S)"><span class="button-icon" aria-hidden="true">↓</span><span class="button-label">Save</span></button>
-        <button id="btn-share" aria-label="Share this scene" title="Share this scene"><span class="button-icon" aria-hidden="true">↗</span><span class="button-label">Share</span></button>
-        <button id="btn-settings" class="settings-button" aria-label="Open controls" aria-controls="panel-right" aria-expanded="false" title="Open controls"><span aria-hidden="true">☷</span><span class="button-label">Controls</span></button>
+        <button id="btn-random" aria-label="Randomize seed" title="New seed (R)">
+          <span class="button-icon" aria-hidden="true">✦</span
+          ><span class="button-label">Randomize</span>
+        </button>
+        <button id="btn-save" aria-label="Save PNG" title="Download PNG (S)">
+          <span class="button-icon" aria-hidden="true">↓</span
+          ><span class="button-label">Save</span>
+        </button>
+        <button id="btn-share" aria-label="Share this scene" title="Share this scene">
+          <span class="button-icon" aria-hidden="true">↗</span
+          ><span class="button-label">Share</span>
+        </button>
+        <button
+          id="btn-settings"
+          class="settings-button"
+          aria-label="Open controls"
+          aria-controls="panel-right"
+          aria-expanded="false"
+          title="Open controls"
+        >
+          <span aria-hidden="true">☷</span><span class="button-label">Controls</span>
+        </button>
       </div>
     </div>
 
@@ -51,7 +75,9 @@
         <div class="control">
           <label for="drift">Speed <span id="drift-out">1×</span></label>
           <input id="drift" type="range" min="-100" max="100" step="1" />
-          <div class="range-ends" aria-hidden="true"><span>reverse</span><span>still</span><span>forward</span></div>
+          <div class="range-ends" aria-hidden="true">
+            <span>reverse</span><span>still</span><span>forward</span>
+          </div>
         </div>
         <div class="control">
           <label for="cycle-rate">Scene duration <span id="cycle-rate-out">6 sec</span></label>
@@ -71,7 +97,10 @@
         </div>
       </section>
 
-      <div class="gesture-hint"><span aria-hidden="true">↔</span> Drag the artwork to scrub. Swipe on touch to change scenes.</div>
+      <div class="gesture-hint">
+        <span aria-hidden="true">↔</span> Drag the artwork to scrub. Swipe on touch to change
+        scenes.
+      </div>
       <div class="hint">
         <kbd>←</kbd>/<kbd>→</kbd> scene · <kbd>R</kbd> seed · <kbd>Space</kbd> play ·
         <kbd>C</kbd> cycle · <kbd>S</kbd> save · <kbd>F</kbd> controls
@@ -81,11 +110,38 @@
     <div class="bottom-deck">
       <div class="hud transport" role="group" aria-label="Playback controls">
         <div class="transport-buttons">
-          <button id="btn-prev" class="icon-button" aria-label="Previous scene" title="Previous scene (←)">‹</button>
-          <button id="btn-pause" class="play-button" aria-label="Pause animation" aria-pressed="false" title="Pause animation (Space)"><span class="button-icon" aria-hidden="true">Ⅱ</span><span class="button-label">Pause</span></button>
-          <button id="btn-next" class="icon-button" aria-label="Next scene" title="Next scene (→)">›</button>
+          <button
+            id="btn-prev"
+            class="icon-button"
+            aria-label="Previous scene"
+            title="Previous scene (←)"
+          >
+            ‹
+          </button>
+          <button
+            id="btn-pause"
+            class="play-button"
+            aria-label="Pause animation"
+            aria-pressed="false"
+            title="Pause animation (Space)"
+          >
+            <span class="button-icon" aria-hidden="true">Ⅱ</span
+            ><span class="button-label">Pause</span>
+          </button>
+          <button id="btn-next" class="icon-button" aria-label="Next scene" title="Next scene (→)">
+            ›
+          </button>
         </div>
-        <button id="btn-cycle" class="cycle-button" aria-label="Auto-play scenes" aria-pressed="false" title="Auto-play scenes (C)"><span class="button-icon" aria-hidden="true">↻</span><span class="button-label">Auto</span></button>
+        <button
+          id="btn-cycle"
+          class="cycle-button"
+          aria-label="Auto-play scenes"
+          aria-pressed="false"
+          title="Auto-play scenes (C)"
+        >
+          <span class="button-icon" aria-hidden="true">↻</span
+          ><span class="button-label">Auto</span>
+        </button>
         <div class="cycle-meter" aria-hidden="true"><span id="cycle-progress"></span></div>
       </div>
       <nav id="gallery" class="hud gallery" aria-label="Render scenes"></nav>

@@ -9,7 +9,7 @@ import {
   formatMotion,
   motionDelta,
   withMode,
-} from "../app-state.js";
+} from "../app-state.ts";
 
 test("initial state is deterministic when given a seed and reduced-motion preference", () => {
   assert.deepEqual(createInitialState({ seed: -0.25, reducedMotion: true }), {
@@ -76,5 +76,13 @@ test("paused playback does not consume elapsed time", () => {
 test("effective animation pixel size honors the scene budget", () => {
   const state = { ...createInitialState({ seed: 0.25 }), pixelSize: 1 };
   assert.equal(effectivePixelSize({ width: 1000, height: 1000, state, sampleBudget: 10000 }), 10);
-  assert.equal(effectivePixelSize({ width: 1000, height: 1000, state: { ...state, running: false }, sampleBudget: 10000 }), 1);
+  assert.equal(
+    effectivePixelSize({
+      width: 1000,
+      height: 1000,
+      state: { ...state, running: false },
+      sampleBudget: 10000,
+    }),
+    1,
+  );
 });

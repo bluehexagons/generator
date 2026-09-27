@@ -1,7 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { normalizeSeed, parseHash, PIXEL_SIZE_MAX, PIXEL_SIZE_MIN, readHash, serializeHash, writeHash } from "../url-state.js";
+import {
+  normalizeSeed,
+  parseHash,
+  PIXEL_SIZE_MAX,
+  PIXEL_SIZE_MIN,
+  readHash,
+  serializeHash,
+  writeHash,
+} from "../url-state.ts";
 
 test("normalizeSeed wraps values into the shareable unit interval", () => {
   assert.equal(normalizeSeed(0.25), 0.25);
@@ -12,9 +20,16 @@ test("normalizeSeed wraps values into the shareable unit interval", () => {
 test("writeHash serializes the shareable state", () => {
   const location = { hash: "" };
   let replacement;
-  const history = { replaceState: (_state, _title, hash) => { replacement = hash; } };
+  const history = {
+    replaceState: (_state, _title, hash) => {
+      replacement = hash;
+    },
+  };
 
-  writeHash({ location, history }, { mode: 4, seed: 0.123456789, pixelSize: 3, palette: 2, motion: -28, cycleMs: 7000 });
+  writeHash(
+    { location, history },
+    { mode: 4, seed: 0.123456789, pixelSize: 3, palette: 2, motion: -28, cycleMs: 7000 },
+  );
 
   assert.equal(replacement, "#mode=4&seed=0.123457&size=3&palette=2&motion=-28&cycle=7");
 });
@@ -22,11 +37,17 @@ test("writeHash serializes the shareable state", () => {
 test("writeHash uses stable scene IDs when supplied", () => {
   const location = { hash: "" };
   let replacement;
-  const history = { replaceState: (_state, _title, hash) => { replacement = hash; } };
+  const history = {
+    replaceState: (_state, _title, hash) => {
+      replacement = hash;
+    },
+  };
 
-  writeHash({ location, history }, { mode: 4, seed: 0.123456789, pixelSize: 3, palette: 2, motion: -28, cycleMs: 7000 }, [
-    "gradient", "diagonal-bands", "scanline-sweep", "rgb-quadrants", "radial-fade",
-  ]);
+  writeHash(
+    { location, history },
+    { mode: 4, seed: 0.123456789, pixelSize: 3, palette: 2, motion: -28, cycleMs: 7000 },
+    ["gradient", "diagonal-bands", "scanline-sweep", "rgb-quadrants", "radial-fade"],
+  );
 
   assert.equal(replacement, "#mode=radial-fade&seed=0.123457&size=3&palette=2&motion=-28&cycle=7");
 });
@@ -45,7 +66,17 @@ test("parseHash returns a validated partial state without mutating anything", ()
 });
 
 test("serializeHash is independent of browser history", () => {
-  assert.equal(serializeHash({ mode: 4, seed: 0.123456789, pixelSize: 3, palette: 2, motion: -28, cycleMs: 7000 }), "#mode=4&seed=0.123457&size=3&palette=2&motion=-28&cycle=7");
+  assert.equal(
+    serializeHash({
+      mode: 4,
+      seed: 0.123456789,
+      pixelSize: 3,
+      palette: 2,
+      motion: -28,
+      cycleMs: 7000,
+    }),
+    "#mode=4&seed=0.123457&size=3&palette=2&motion=-28&cycle=7",
+  );
 });
 
 test("readHash validates and clamps values from a deep link", () => {

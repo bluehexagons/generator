@@ -1,6 +1,4 @@
-"use strict";
-
-import { MODES, PALETTES } from "./algorithms.js";
+import { MODES, PALETTES } from "./algorithms.ts";
 import {
   DEFAULT_CYCLE_MS,
   advanceFrame,
@@ -15,15 +13,16 @@ import {
   withPixelSize,
   withRunning,
   withSeed,
-} from "./app-state.js";
-import { renderTo } from "./renderer.js";
+} from "./app-state.ts";
+import type { AppState } from "./app-state.ts";
+import { renderTo } from "./renderer.ts";
 import {
   ANIMATION_FRAME_MS,
   consumeRenderTime,
   createClock,
   resetClock,
   tickClock,
-} from "./playback.js";
+} from "./playback.ts";
 import {
   CYCLE_SECONDS_MAX,
   CYCLE_SECONDS_MIN,
@@ -34,16 +33,16 @@ import {
   PIXEL_SIZE_MIN,
   readHash,
   writeHash,
-} from "./url-state.js";
-import { createUi } from "./ui.js";
+} from "./url-state.ts";
+import { createUi } from "./ui.ts";
 
 const MAX_DEVICE_PIXEL_RATIO = 1.5;
-const MODE_IDS = MODES.map(mode => mode.id);
+const MODE_IDS = MODES.map((mode) => mode.id);
 const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const compactControls = window.matchMedia("(max-width: 980px)");
 
-let state;
-let ui;
+let state: AppState;
+let ui: ReturnType<typeof createUi>;
 let clock = createClock();
 let animationFrameId = 0;
 let renderScheduled = false;
@@ -92,14 +91,20 @@ function ensureAnimationLoop(reset = false) {
   if (!animationFrameId && hasActivePlayback()) animationFrameId = requestAnimationFrame(loop);
 }
 
-function loop(timestamp) {
+function loop(timestamp: number) {
   animationFrameId = 0;
   if (!hasActivePlayback()) return;
 
   const tick = tickClock(clock, timestamp);
   clock = tick.clock;
 
-  const playback = advanceFrame(state, tick.elapsedMs, clock.timeSinceRender, ANIMATION_FRAME_MS, MODES.length);
+  const playback = advanceFrame(
+    state,
+    tick.elapsedMs,
+    clock.timeSinceRender,
+    ANIMATION_FRAME_MS,
+    MODES.length,
+  );
   state = playback.state;
 
   if (playback.sceneChanged) {
@@ -120,7 +125,10 @@ function loop(timestamp) {
   ensureAnimationLoop();
 }
 
-function setMode(mode, { announce = true, scroll = true } = {}) {
+function setMode(
+  mode: number,
+  { announce = true, scroll = true }: { announce?: boolean; scroll?: boolean } = {},
+) {
   state = withMode(state, mode, MODES.length);
   ui.setCycleProgress(0);
   ui.updateGallerySelection(state.mode, scroll);
@@ -129,7 +137,7 @@ function setMode(mode, { announce = true, scroll = true } = {}) {
   if (announce) ui.showToast(MODES[state.mode].name);
 }
 
-function setPalette(palette) {
+function setPalette(palette: number) {
   state = withPalette(state, palette, PALETTES.length);
   ui.setPaletteValue(state.palette);
   ui.renderGallery(state.palette);
@@ -138,7 +146,7 @@ function setPalette(palette) {
   ui.showToast(`${PALETTES[state.palette].name} palette`);
 }
 
-function setSeed(seed, announce = false) {
+function setSeed(seed: number, announce = false) {
   state = withSeed(state, seed);
   ui.setCycleProgress(0);
   writeCurrentHash();
@@ -152,9 +160,16 @@ function randomizeSeed() {
 
 function wireCanvasGestures() {
   const { main } = ui.elements;
-  let gesture = null;
+  let gesture: {
+    id: number;
+    type: string;
+    x: number;
+    y: number;
+    seed: number;
+    moved: boolean;
+  } | null = null;
 
-  main.addEventListener("pointerdown", event => {
+  main.addEventListener("pointerdown", (event) => {
     if (event.button !== 0 || gesture) return;
     gesture = {
       id: event.pointerId,
@@ -169,23 +184,29 @@ function wireCanvasGestures() {
     main.setPointerCapture(event.pointerId);
   });
 
-  main.addEventListener("pointermove", event => {
+  main.addEventListener("pointermove", (event) => {
     if (!gesture || gesture.id !== event.pointerId) return;
     const dx = event.clientX - gesture.x;
     const dy = event.clientY - gesture.y;
     gesture.moved ||= Math.hypot(dx, dy) > (gesture.type === "touch" ? 14 : 7);
     if (gesture.type !== "touch" && gesture.moved) {
-      state = { ...state, seed: normalizeSeed(gesture.seed + dx / Math.max(240, main.clientWidth)) };
+      state = {
+        ...state,
+        seed: normalizeSeed(gesture.seed + dx / Math.max(240, main.clientWidth)),
+      };
       scheduleRender();
     }
   });
 
-  const finishGesture = event => {
+  const finishGesture = (event: PointerEvent) => {
     if (!gesture || gesture.id !== event.pointerId) return;
     const dx = event.clientX - gesture.x;
     const dy = event.clientY - gesture.y;
     const wasTouch = gesture.type === "touch";
-    const isSwipe = wasTouch && Math.abs(dx) > Math.max(52, main.clientWidth * 0.12) && Math.abs(dx) > Math.abs(dy) * 1.25;
+    const isSwipe =
+      wasTouch &&
+      Math.abs(dx) > Math.max(52, main.clientWidth * 0.12) &&
+      Math.abs(dx) > Math.abs(dy) * 1.25;
     const isTap = Math.hypot(dx, dy) <= (wasTouch ? 18 : 7);
 
     state = { ...state, scrubbing: false };
@@ -202,7 +223,7 @@ function wireCanvasGestures() {
   };
 
   main.addEventListener("pointerup", finishGesture);
-  main.addEventListener("pointercancel", event => {
+  main.addEventListener("pointercancel", (event) => {
     if (!gesture || gesture.id !== event.pointerId) return;
     state = { ...state, scrubbing: false };
     main.classList.remove("is-scrubbing");
@@ -213,7 +234,7 @@ function wireCanvasGestures() {
   });
 }
 
-async function copyText(text) {
+async function copyText(text: string) {
   if (navigator.clipboard?.writeText) {
     try {
       await navigator.clipboard.writeText(text);
@@ -241,8 +262,17 @@ function savePng() {
   exportCanvas.width = main.width;
   exportCanvas.height = main.height;
   const exportContext = exportCanvas.getContext("2d", { alpha: false });
-  renderTo(exportContext, exportCanvas.width, exportCanvas.height, MODES[state.mode], state.seed, state.pixelSize, state.palette);
-  exportCanvas.toBlob(blob => {
+  if (!exportContext) throw new Error("Canvas 2D is unavailable");
+  renderTo(
+    exportContext,
+    exportCanvas.width,
+    exportCanvas.height,
+    MODES[state.mode],
+    state.seed,
+    state.pixelSize,
+    state.palette,
+  );
+  exportCanvas.toBlob((blob) => {
     if (!blob) {
       ui.showToast("Couldn’t create the PNG");
       return;
@@ -261,7 +291,6 @@ function savePng() {
 
 function wireUi() {
   const {
-    main,
     randomButton,
     saveButton,
     shareButton,
@@ -291,11 +320,14 @@ function wireUi() {
     try {
       if (navigator.share && matchMedia("(pointer: coarse)").matches) {
         try {
-          await navigator.share({ title: `Plasma Generator — ${MODES[state.mode].name}`, url: location.href });
+          await navigator.share({
+            title: `Plasma Generator — ${MODES[state.mode].name}`,
+            url: location.href,
+          });
           ui.showToast("Shared");
           return;
         } catch (error) {
-          if (error?.name === "AbortError") return;
+          if (error instanceof DOMException && error.name === "AbortError") return;
         }
       }
       await copyText(location.href);
@@ -320,12 +352,12 @@ function wireUi() {
     ensureAnimationLoop(true);
   });
 
-  sizeSlider.min = PIXEL_SIZE_MIN;
-  sizeSlider.max = PIXEL_SIZE_MAX;
-  motionSlider.min = MOTION_MIN;
-  motionSlider.max = MOTION_MAX;
-  cycleRateSlider.min = CYCLE_SECONDS_MIN;
-  cycleRateSlider.max = CYCLE_SECONDS_MAX;
+  sizeSlider.min = String(PIXEL_SIZE_MIN);
+  sizeSlider.max = String(PIXEL_SIZE_MAX);
+  motionSlider.min = String(MOTION_MIN);
+  motionSlider.max = String(MOTION_MAX);
+  cycleRateSlider.min = String(CYCLE_SECONDS_MIN);
+  cycleRateSlider.max = String(CYCLE_SECONDS_MAX);
   sizeSlider.addEventListener("input", () => {
     state = withPixelSize(state, Number(sizeSlider.value), PIXEL_SIZE_MIN, PIXEL_SIZE_MAX);
     ui.setPixelSizeValue(state.pixelSize);
@@ -358,35 +390,56 @@ function wireUi() {
     seedInput.value = "";
   });
 
-  settingsButton.addEventListener("click", () => setPanelOpen(settingsButton.getAttribute("aria-expanded") !== "true"));
+  settingsButton.addEventListener("click", () =>
+    setPanelOpen(settingsButton.getAttribute("aria-expanded") !== "true"),
+  );
   closeSettingsButton.addEventListener("click", () => setPanelOpen(false));
   panelScrim.addEventListener("click", () => setPanelOpen(false));
-  compactControls.addEventListener("change", event => setPanelOpen(!event.matches));
-  panel.addEventListener("keydown", event => {
+  compactControls.addEventListener("change", (event) => setPanelOpen(!event.matches));
+  panel.addEventListener("keydown", (event) => {
     if (event.key !== "Tab" || !compactControls.matches) return;
-    const controls = [...event.currentTarget.querySelectorAll("button, input, select")].filter(element => !element.disabled);
+    const controls = [
+      ...panel.querySelectorAll<HTMLButtonElement | HTMLInputElement | HTMLSelectElement>(
+        "button, input, select",
+      ),
+    ].filter((element) => !element.disabled);
     const first = controls[0];
     const last = controls.at(-1);
-    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last?.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first?.focus();
+    }
   });
 
-  gallery.addEventListener("wheel", event => {
-    if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
-    gallery.scrollLeft += event.deltaY;
-    event.preventDefault();
-  }, { passive: false });
+  gallery.addEventListener(
+    "wheel",
+    (event) => {
+      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+      gallery.scrollLeft += event.deltaY;
+      event.preventDefault();
+    },
+    { passive: false },
+  );
 
   wireCanvasGestures();
 
-  window.addEventListener("keydown", event => {
+  window.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       setPanelOpen(false);
       return;
     }
-    if (event.target.closest?.("input, select, button, [contenteditable]")) return;
-    if (event.key === " ") { event.preventDefault(); pauseButton.click(); }
-    else if (event.key === "ArrowRight") setMode(state.mode + 1);
+    if (
+      event.target instanceof Element &&
+      event.target.closest("input, select, button, [contenteditable]")
+    )
+      return;
+    if (event.key === " ") {
+      event.preventDefault();
+      pauseButton.click();
+    } else if (event.key === "ArrowRight") setMode(state.mode + 1);
     else if (event.key === "ArrowLeft") setMode(state.mode - 1);
     else if (event.key.toLowerCase() === "r") randomizeSeed();
     else if (event.key.toLowerCase() === "s") saveButton.click();
@@ -401,7 +454,7 @@ function wireUi() {
     clock = resetClock();
     if (!document.hidden) ensureAnimationLoop();
   });
-  prefersReducedMotion.addEventListener("change", event => {
+  prefersReducedMotion.addEventListener("change", (event) => {
     if (!event.matches || !state.running) return;
     state = withRunning(state, false);
     clock = resetClock();
@@ -427,7 +480,7 @@ function wireUi() {
   setPanelOpen(!compactControls.matches);
 }
 
-function setPanelOpen(open) {
+function setPanelOpen(open: boolean) {
   ui.setPanelOpen(open);
 }
 
@@ -435,9 +488,14 @@ window.addEventListener("DOMContentLoaded", () => {
   state = createInitialState({ reducedMotion: prefersReducedMotion.matches });
   readHash(location, state, MODES.length, PALETTES.length, MODE_IDS);
   if (state.cycleMs > 0) cyclePreferenceMs = state.cycleMs;
-  ui = createUi(document, { modes: MODES, palettes: PALETTES, prefersReducedMotion, compactControls });
+  ui = createUi(document, {
+    modes: MODES,
+    palettes: PALETTES,
+    prefersReducedMotion,
+    compactControls,
+  });
   wireUi();
-  ui.buildGallery(index => setMode(index, { scroll: false }));
+  ui.buildGallery((index) => setMode(index, { scroll: false }));
   ui.renderGallery(state.palette);
   ui.updateGallerySelection(state.mode);
   fitMain();

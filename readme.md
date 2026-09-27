@@ -8,22 +8,24 @@ The other ten scenes go further into familiar procedural territory: sine-wave pl
 
 ## Run it
 
-Serve the directory with any static file server, then open `index.html`:
+Install the development tools and start Vite:
 
 ```sh
-python3 -m http.server
+npm install
+npm run dev
 ```
 
-There is no build step. The app uses plain JavaScript modules and the Canvas 2D API.
+Open the local URL shown by Vite. The app uses TypeScript modules and the Canvas 2D API, with no runtime dependencies. Node 20.19 or newer is required for the development tools.
 
-To run the checks:
+To create a deployable static site, run `npm run build` and serve the `dist/` directory. You can inspect that build locally with `npm run preview`.
+
+To run the type check, Oxlint, Oxfmt check, tests, and production build:
 
 ```sh
 npm run check
-npm test
 ```
 
-Node 18.18 or newer is required for the tests.
+Run `npm run format` to apply Oxfmt, or use `npm run typecheck`, `npm run lint`, and `npm test` separately.
 
 ## Controls
 
@@ -39,10 +41,10 @@ Animation renders at a slightly coarser resolution when a high-density display w
 
 ## Files
 
-- `algorithms.js` contains scene metadata, palettes, noise helpers, and pixel functions.
-- `renderer.js` writes pixels through the shared scene-preparation contract into a reusable `ImageData` buffer.
-- `app-state.js` contains pure state transitions and playback calculations.
-- `playback.js` contains request-animation-frame clock math.
-- `url-state.js` parses and serializes the shareable hash, with browser history kept at the edge.
-- `ui.js` owns DOM projection for the HUD, controls, panel, toast, and gallery.
-- `script.js` bootstraps the browser event wiring and coordinates those modules.
+- `algorithms.ts` contains scene metadata, palettes, noise helpers, and pixel functions.
+- `renderer.ts` writes pixels through the shared scene-preparation contract into a reusable `ImageData` buffer.
+- `app-state.ts` contains pure state transitions and playback calculations.
+- `playback.ts` contains request-animation-frame clock math.
+- `url-state.ts` parses and serializes the shareable hash, with browser history kept at the edge.
+- `ui.ts` owns DOM projection for the HUD, controls, panel, toast, and gallery.
+- `script.ts` bootstraps the browser event wiring and coordinates those modules.

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { MODES, PALETTES } from "../algorithms.js";
+import { MODES, PALETTES } from "../algorithms.ts";
 
 const samples = [
   [0, 0, 96, 64, 0.1, 0],
@@ -25,17 +25,21 @@ test("all render modes return deterministic packed RGB colors", () => {
 });
 
 test("palette definitions have stable, unique names", () => {
-  const names = PALETTES.map(palette => palette.name);
+  const names = PALETTES.map((palette) => palette.name);
   assert.equal(new Set(names).size, names.length);
   assert.ok(names.length > 0);
 });
 
 test("render modes expose stable identities and animation budgets", () => {
-  const ids = MODES.map(mode => mode.id);
+  const ids = MODES.map((mode) => mode.id);
   assert.equal(new Set(ids).size, ids.length);
-  assert.ok(ids.every(id => /^[a-z0-9-]+$/.test(id)));
-  assert.ok(MODES.every(mode => Number.isFinite(mode.animationSampleBudget) && mode.animationSampleBudget > 0));
-  assert.ok(MODES.every(mode => typeof mode.prepare === "function"));
+  assert.ok(ids.every((id) => /^[a-z0-9-]+$/.test(id)));
+  assert.ok(
+    MODES.every(
+      (mode) => Number.isFinite(mode.animationSampleBudget) && mode.animationSampleBudget > 0,
+    ),
+  );
+  assert.ok(MODES.every((mode) => typeof mode.prepare === "function"));
 });
 
 test("the original scenes vary across both the frame and the seed", () => {
@@ -61,7 +65,11 @@ test("prepared generators preserve their unprepared output", () => {
   const height = 83;
   const seed = 0.42;
   const samplesToCheck = [
-    [0, 0], [1, 1], [17, 9], [68, 41], [136, 82],
+    [0, 0],
+    [1, 1],
+    [17, 9],
+    [68, 41],
+    [136, 82],
   ];
 
   for (const mode of MODES) {
@@ -82,7 +90,12 @@ test("standardized scene preparation preserves generator output", () => {
   const height = 83;
   const seed = 0.42;
   const palette = 2;
-  const samplesToCheck = [[0, 0], [17, 9], [68, 41], [136, 82]];
+  const samplesToCheck = [
+    [0, 0],
+    [17, 9],
+    [68, 41],
+    [136, 82],
+  ];
 
   for (const mode of MODES) {
     const prepared = mode.prepare({ width, height, seed, palette });

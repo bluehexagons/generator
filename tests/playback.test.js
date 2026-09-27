@@ -1,13 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import {
-  ANIMATION_FRAME_MS,
-  consumeRenderTime,
-  createClock,
-  shouldRender,
-  tickClock,
-} from "../playback.js";
+import { consumeRenderTime, createClock, shouldRender, tickClock } from "../playback.ts";
 
 test("clock accumulates capped frame deltas until a render is due", () => {
   let clock = createClock();
