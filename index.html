@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#080b10" />
     <title>Plasma Generator</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="style.css" />
     <script type="module" src="/script.ts"></script>
   </head>
@@ -21,7 +22,7 @@
           <span id="playback-state" class="playback-state"><i></i> playing</span>
         </div>
         <div class="mode-line">
-          <h1 id="mode-name" class="mode-name" aria-live="polite">—</h1>
+          <h1 id="mode-name" class="mode-name">—</h1>
           <span id="mode-count" class="mode-count">— / —</span>
         </div>
         <p id="mode-note" class="mode-note">—</p>
@@ -71,7 +72,7 @@
     <div id="panel-scrim" class="panel-scrim" aria-hidden="true"></div>
     <aside class="hud right" id="panel-right" aria-label="Generator controls" aria-hidden="true">
       <div class="panel-heading">
-        <span>Controls</span>
+        <h2 id="panel-title">Controls</h2>
         <button id="btn-close-settings" class="close-button" aria-label="Close controls">×</button>
       </div>
 
@@ -135,7 +136,6 @@
             id="btn-pause"
             class="play-button"
             aria-label="Pause animation"
-            aria-pressed="false"
             title="Pause animation (Space)"
           >
             <span class="button-icon" aria-hidden="true">Ⅱ</span
@@ -158,7 +158,7 @@
         <button
           id="btn-showcase"
           class="showcase-button"
-          aria-label="Start showcase mode"
+          aria-label="Showcase mode"
           aria-pressed="false"
           title="Procedural showcase"
         >
@@ -167,7 +167,18 @@
         </button>
         <div class="cycle-meter" aria-hidden="true"><span id="cycle-progress"></span></div>
       </div>
-      <nav id="gallery" class="hud gallery" aria-label="Render scenes"></nav>
+      <nav
+        id="gallery"
+        class="hud gallery"
+        aria-label="Render scenes"
+        aria-describedby="gallery-help"
+        aria-keyshortcuts="ArrowLeft ArrowRight Home End"
+      >
+        <span id="gallery-help" class="sr-only">
+          Use the left and right arrow keys to select scenes. Home and End select the first and last
+          scene.
+        </span>
+      </nav>
     </div>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>

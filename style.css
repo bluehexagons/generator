@@ -20,6 +20,17 @@
   box-sizing: border-box;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
+
 html,
 body {
   margin: 0;
@@ -367,6 +378,10 @@ button.on .button-icon {
   justify-content: space-between;
   margin-bottom: 13px;
 }
+.panel-heading h2 {
+  margin: 0;
+  font: inherit;
+}
 
 .close-button {
   display: none;
@@ -656,11 +671,21 @@ body.ui-hidden .top-bar,
 body.ui-hidden .bottom-deck {
   opacity: 0;
   pointer-events: none;
+  visibility: hidden;
 }
 
 .top-bar,
 .bottom-deck {
-  transition: opacity 420ms ease;
+  transition:
+    opacity 420ms ease,
+    visibility 0s linear;
+}
+
+body.ui-hidden .top-bar,
+body.ui-hidden .bottom-deck {
+  transition:
+    opacity 420ms ease,
+    visibility 0s linear 420ms;
 }
 
 @media (max-width: 980px) {

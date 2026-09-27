@@ -138,7 +138,12 @@ function armIdleUiTimer() {
   window.clearTimeout(idleUiTimer);
   document.body.classList.remove("ui-hidden");
   if (!hideUiWhenIdle) return;
-  idleUiTimer = window.setTimeout(() => document.body.classList.add("ui-hidden"), 4200);
+  idleUiTimer = window.setTimeout(() => {
+    const activeElement = document.activeElement;
+    const focusIsInUi =
+      activeElement instanceof HTMLElement && activeElement.closest(".top-bar, .bottom-deck");
+    if (!focusIsInUi) document.body.classList.add("ui-hidden");
+  }, 4200);
 }
 
 function toggleFullscreen() {
@@ -520,6 +525,28 @@ function wireUi() {
   );
 
   wireCanvasGestures();
+
+  gallery.addEventListener("keydown", (event) => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement) || !target.matches(".thumb")) return;
+
+    const currentMode = Number(target.dataset.idx);
+    const nextMode =
+      event.key === "ArrowRight"
+        ? currentMode + 1
+        : event.key === "ArrowLeft"
+          ? currentMode - 1
+          : event.key === "Home"
+            ? 0
+            : event.key === "End"
+              ? MODES.length - 1
+              : null;
+    if (nextMode === null) return;
+
+    event.preventDefault();
+    setMode(nextMode);
+    ui.focusGalleryMode(state.mode);
+  });
 
   window.addEventListener("pointermove", armIdleUiTimer, { passive: true });
   window.addEventListener("pointerdown", armIdleUiTimer, { passive: true });

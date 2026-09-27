@@ -83,6 +83,10 @@ export function createUi(
 
   function syncHud(state: AppState) {
     const mode = modes[state.mode];
+    const artworkLabel = `${mode.name}: ${mode.note}`;
+    if (elements.main.getAttribute("aria-label") !== artworkLabel) {
+      elements.main.setAttribute("aria-label", artworkLabel);
+    }
     elements.modeName.textContent = mode.name;
     elements.modeNote.textContent = mode.note;
     elements.seedReadout.textContent = state.seed.toFixed(6);
@@ -118,21 +122,15 @@ export function createUi(
     if (pauseLabel) pauseLabel.textContent = paused ? "Play" : "Pause";
     if (pauseIcon) pauseIcon.textContent = paused ? "▶" : "Ⅱ";
     elements.pauseButton.setAttribute("aria-label", paused ? "Play animation" : "Pause animation");
-    elements.pauseButton.setAttribute("aria-pressed", String(paused));
+    elements.pauseButton.removeAttribute("aria-pressed");
     elements.pauseButton.title = paused ? "Play animation (Space)" : "Pause animation (Space)";
     elements.cycleButton.classList.toggle("on", autoPlaying);
     elements.cycleButton.setAttribute("aria-pressed", String(autoPlaying));
-    elements.cycleButton.setAttribute(
-      "aria-label",
-      autoPlaying ? "Stop auto-play" : "Auto-play scenes",
-    );
+    elements.cycleButton.setAttribute("aria-label", "Auto-play scenes");
     elements.cycleButton.title = autoPlaying ? "Stop auto-play (C)" : "Auto-play scenes (C)";
     elements.showcaseButton.classList.toggle("on", showcase);
     elements.showcaseButton.setAttribute("aria-pressed", String(showcase));
-    elements.showcaseButton.setAttribute(
-      "aria-label",
-      showcase ? "Stop showcase mode" : "Start showcase mode",
-    );
+    elements.showcaseButton.setAttribute("aria-label", "Showcase mode");
     elements.showcaseButton.title = showcase ? "Stop showcase mode" : "Procedural showcase";
     elements.playbackState.classList.toggle("paused", paused);
     elements.playbackState.lastChild!.textContent = paused
@@ -189,6 +187,7 @@ export function createUi(
       button.className = "thumb";
       button.type = "button";
       button.dataset.idx = String(index);
+      button.tabIndex = index === 0 ? 0 : -1;
       button.setAttribute("aria-label", `Select ${mode.name}`);
       button.setAttribute("aria-pressed", "false");
       button.title = `${mode.name} — ${mode.note}`;
@@ -212,6 +211,7 @@ export function createUi(
       const selected = Number((element as HTMLElement).dataset.idx) === mode;
       element.classList.toggle("active", selected);
       element.setAttribute("aria-pressed", String(selected));
+      (element as HTMLButtonElement).tabIndex = selected ? 0 : -1;
       if (selected) active = element as HTMLElement;
     }
     if (scroll && active) {
@@ -223,13 +223,19 @@ export function createUi(
     }
   }
 
+  function focusGalleryMode(mode: number) {
+    const button = elements.gallery.querySelector<HTMLButtonElement>(`[data-idx="${mode}"]`);
+    button?.focus({ preventScroll: true });
+  }
+
   function setPanelOpen(open: boolean) {
     const modal = compactControls.matches;
+    const wasOpen = elements.panel.classList.contains("open");
     const background = document.querySelectorAll<HTMLElement>("#main, .top-bar, .bottom-deck");
 
     if (!open) {
       for (const element of background) element.inert = false;
-      if (elements.panel.contains(document.activeElement)) {
+      if (wasOpen && (modal || elements.panel.contains(document.activeElement))) {
         elements.settingsButton.focus({ preventScroll: true });
       }
     }
@@ -239,9 +245,11 @@ export function createUi(
     if (modal) {
       elements.panel.setAttribute("role", "dialog");
       elements.panel.setAttribute("aria-modal", String(open));
+      elements.panel.setAttribute("aria-labelledby", "panel-title");
     } else {
       elements.panel.removeAttribute("role");
       elements.panel.removeAttribute("aria-modal");
+      elements.panel.removeAttribute("aria-labelledby");
     }
     elements.panelScrim.classList.toggle("open", open);
     elements.panelScrim.setAttribute("aria-hidden", String(!open));
@@ -262,6 +270,7 @@ export function createUi(
     buildGallery,
     renderGallery,
     updateGallerySelection,
+    focusGalleryMode,
     syncHud,
     setPaletteValue,
     setPixelSizeValue,
