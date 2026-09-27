@@ -34,6 +34,7 @@ export function createUi(
 ) {
   const elements = {
     main: required<HTMLCanvasElement>(document, "main"),
+    transition: required<HTMLCanvasElement>(document, "transition"),
     modeName: required(document, "mode-name"),
     modeNote: required(document, "mode-note"),
     seedReadout: required(document, "seed-readout"),
@@ -45,6 +46,7 @@ export function createUi(
     randomButton: required<HTMLButtonElement>(document, "btn-random"),
     saveButton: required<HTMLButtonElement>(document, "btn-save"),
     shareButton: required<HTMLButtonElement>(document, "btn-share"),
+    fullscreenButton: required<HTMLButtonElement>(document, "btn-fullscreen"),
     settingsButton: required<HTMLButtonElement>(document, "btn-settings"),
     closeSettingsButton: required<HTMLButtonElement>(document, "btn-close-settings"),
     panelScrim: required(document, "panel-scrim"),
@@ -53,6 +55,8 @@ export function createUi(
     pauseButton: required<HTMLButtonElement>(document, "btn-pause"),
     nextButton: required<HTMLButtonElement>(document, "btn-next"),
     cycleButton: required<HTMLButtonElement>(document, "btn-cycle"),
+    showcaseButton: required<HTMLButtonElement>(document, "btn-showcase"),
+    hideUiInput: required<HTMLInputElement>(document, "hide-ui"),
     sizeSlider: required<HTMLInputElement>(document, "pixel-size"),
     sizeOutput: required(document, "pixel-size-out"),
     motionSlider: required<HTMLInputElement>(document, "drift"),
@@ -104,9 +108,10 @@ export function createUi(
     elements.cycleRateOutput.textContent = `${cyclePreferenceMs / 1000} sec`;
   }
 
-  function syncPlaybackControls(state: AppState) {
+  function syncPlaybackControls(state: AppState, showcase = false) {
     const paused = !state.running;
     const cycling = state.cycleMs > 0;
+    const autoPlaying = cycling && !showcase;
     const pauseLabel = elements.pauseButton.querySelector(".button-label");
     const pauseIcon = elements.pauseButton.querySelector(".button-icon");
     if (pauseLabel) pauseLabel.textContent = paused ? "Play" : "Pause";
@@ -114,30 +119,53 @@ export function createUi(
     elements.pauseButton.setAttribute("aria-label", paused ? "Play animation" : "Pause animation");
     elements.pauseButton.setAttribute("aria-pressed", String(paused));
     elements.pauseButton.title = paused ? "Play animation (Space)" : "Pause animation (Space)";
-    elements.cycleButton.classList.toggle("on", cycling);
-    elements.cycleButton.setAttribute("aria-pressed", String(cycling));
+    elements.cycleButton.classList.toggle("on", autoPlaying);
+    elements.cycleButton.setAttribute("aria-pressed", String(autoPlaying));
     elements.cycleButton.setAttribute(
       "aria-label",
-      cycling ? "Stop auto-play" : "Auto-play scenes",
+      autoPlaying ? "Stop auto-play" : "Auto-play scenes",
     );
-    elements.cycleButton.title = cycling ? "Stop auto-play (C)" : "Auto-play scenes (C)";
+    elements.cycleButton.title = autoPlaying ? "Stop auto-play (C)" : "Auto-play scenes (C)";
+    elements.showcaseButton.classList.toggle("on", showcase);
+    elements.showcaseButton.setAttribute("aria-pressed", String(showcase));
+    elements.showcaseButton.setAttribute(
+      "aria-label",
+      showcase ? "Stop showcase mode" : "Start showcase mode",
+    );
+    elements.showcaseButton.title = showcase ? "Stop showcase mode" : "Procedural showcase";
     elements.playbackState.classList.toggle("paused", paused);
     elements.playbackState.lastChild!.textContent = paused
       ? " paused"
-      : cycling
-        ? " auto-playing"
-        : state.motion === 0
-          ? " still"
-          : " playing";
+      : showcase
+        ? " showcasing"
+        : cycling
+          ? " auto-playing"
+          : state.motion === 0
+            ? " still"
+            : " playing";
     if (!cycling) setCycleProgress(0);
   }
 
-  function applyStateToControls(state: AppState, cyclePreferenceMs: number) {
+  function applyStateToControls(state: AppState, cyclePreferenceMs: number, showcase = false) {
     setPaletteValue(state.palette);
     setPixelSizeValue(state.pixelSize);
     setMotionValue(state.motion);
     setCycleRateValue(cyclePreferenceMs);
-    syncPlaybackControls(state);
+    syncPlaybackControls(state, showcase);
+  }
+
+  function syncFullscreen() {
+    const active = Boolean(document.fullscreenElement);
+    elements.fullscreenButton.setAttribute(
+      "aria-label",
+      active ? "Exit fullscreen" : "Enter fullscreen",
+    );
+    elements.fullscreenButton.title = active ? "Exit fullscreen (G)" : "Fullscreen (G)";
+    const label = elements.fullscreenButton.querySelector(".button-label");
+    if (label) label.textContent = active ? "Exit fullscreen" : "Fullscreen";
+    const icon = elements.fullscreenButton.querySelector(".button-icon");
+    if (icon) icon.textContent = active ? "⤢" : "⛶";
+    elements.fullscreenButton.classList.toggle("on", active);
   }
 
   function showToast(message: string) {
@@ -229,6 +257,7 @@ export function createUi(
   return {
     elements,
     mainContext,
+    transitionContext: context2d(elements.transition),
     buildGallery,
     renderGallery,
     updateGallerySelection,
@@ -239,6 +268,7 @@ export function createUi(
     setCycleRateValue,
     syncPlaybackControls,
     applyStateToControls,
+    syncFullscreen,
     setCycleProgress,
     setPanelOpen,
     showToast,

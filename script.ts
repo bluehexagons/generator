@@ -46,7 +46,12 @@ let ui: ReturnType<typeof createUi>;
 let clock = createClock();
 let animationFrameId = 0;
 let renderScheduled = false;
+let transitionRenderScheduled = false;
 let cyclePreferenceMs = DEFAULT_CYCLE_MS;
+let showcaseActive = false;
+let recentShowcaseModes: number[] = [];
+let hideUiWhenIdle = false;
+let idleUiTimer = 0;
 
 function writeCurrentHash() {
   writeHash(window, state, MODE_IDS);
@@ -64,12 +69,24 @@ function fitMain() {
   scheduleRender();
 }
 
-function scheduleRender() {
+function scheduleRender(fade = false) {
+  transitionRenderScheduled ||= fade;
   if (renderScheduled) return;
   renderScheduled = true;
   requestAnimationFrame(() => {
     renderScheduled = false;
     const { main } = ui.elements;
+    if (transitionRenderScheduled && main.width > 0 && main.height > 0) {
+      const { transition } = ui.elements;
+      transition.width = main.width;
+      transition.height = main.height;
+      ui.transitionContext.clearRect(0, 0, transition.width, transition.height);
+      ui.transitionContext.drawImage(main, 0, 0);
+      transition.classList.remove("fade");
+      transition.classList.add("covering");
+    }
+    const fadeTransition = transitionRenderScheduled;
+    transitionRenderScheduled = false;
     const mode = MODES[state.mode];
     const pixelSize = effectivePixelSize({
       width: main.width,
@@ -79,7 +96,55 @@ function scheduleRender() {
     });
     renderTo(ui.mainContext, main.width, main.height, mode, state.seed, pixelSize, state.palette);
     ui.syncHud(state);
+    if (fadeTransition) {
+      const { transition } = ui.elements;
+      requestAnimationFrame(() => {
+        transition.classList.remove("covering");
+        transition.classList.add("fade");
+      });
+    }
   });
+}
+
+function chooseShowcaseMode(currentMode: number) {
+  const recent = new Set(recentShowcaseModes.slice(-7));
+  recent.add(currentMode);
+  let candidates = MODES.map((_, index) => index).filter((index) => !recent.has(index));
+  if (candidates.length === 0)
+    candidates = MODES.map((_, index) => index).filter((index) => index !== currentMode);
+  const selected =
+    candidates[Math.floor(Math.random() * candidates.length)] ?? (currentMode + 1) % MODES.length;
+  recentShowcaseModes.push(selected);
+  recentShowcaseModes = recentShowcaseModes.slice(-8);
+  return selected;
+}
+
+function setShowcase(active: boolean) {
+  showcaseActive = active;
+  if (active) {
+    recentShowcaseModes = [state.mode];
+    state = withCycle(state, cyclePreferenceMs);
+    state = withRunning(state, true);
+  } else if (showcaseActive === false && state.cycleMs > 0) {
+    state = withCycle(state, 0);
+  }
+  ui.syncPlaybackControls(state, showcaseActive);
+  writeCurrentHash();
+  ensureAnimationLoop(true);
+}
+
+function armIdleUiTimer() {
+  window.clearTimeout(idleUiTimer);
+  document.body.classList.remove("ui-hidden");
+  if (!hideUiWhenIdle) return;
+  idleUiTimer = window.setTimeout(() => document.body.classList.add("ui-hidden"), 4200);
+}
+
+function toggleFullscreen() {
+  const change = document.fullscreenElement
+    ? document.exitFullscreen()
+    : document.documentElement.requestFullscreen();
+  void change.catch(() => ui.showToast("Fullscreen unavailable"));
 }
 
 function hasActivePlayback() {
@@ -104,6 +169,9 @@ function loop(timestamp: number) {
     clock.timeSinceRender,
     ANIMATION_FRAME_MS,
     MODES.length,
+    Math.random,
+    MODES[state.mode].motionScale,
+    showcaseActive ? chooseShowcaseMode : undefined,
   );
   state = playback.state;
 
@@ -119,7 +187,7 @@ function loop(timestamp: number) {
   if (playback.renderRequested) {
     const consumed = consumeRenderTime(clock);
     clock = consumed.clock;
-    scheduleRender();
+    scheduleRender(playback.sceneChanged);
   }
 
   ensureAnimationLoop();
@@ -130,10 +198,11 @@ function setMode(
   { announce = true, scroll = true }: { announce?: boolean; scroll?: boolean } = {},
 ) {
   state = withMode(state, mode, MODES.length);
+  if (showcaseActive) recentShowcaseModes = [state.mode];
   ui.setCycleProgress(0);
   ui.updateGallerySelection(state.mode, scroll);
   writeCurrentHash();
-  scheduleRender();
+  scheduleRender(true);
   if (announce) ui.showToast(MODES[state.mode].name);
 }
 
@@ -294,6 +363,7 @@ function wireUi() {
     randomButton,
     saveButton,
     shareButton,
+    fullscreenButton,
     settingsButton,
     closeSettingsButton,
     panelScrim,
@@ -302,6 +372,8 @@ function wireUi() {
     pauseButton,
     nextButton,
     cycleButton,
+    showcaseButton,
+    hideUiInput,
     sizeSlider,
     motionSlider,
     cycleRateSlider,
@@ -311,6 +383,12 @@ function wireUi() {
   } = ui.elements;
 
   randomButton.addEventListener("click", randomizeSeed);
+  fullscreenButton.addEventListener("click", toggleFullscreen);
+  showcaseButton.addEventListener("click", () => setShowcase(!showcaseActive));
+  hideUiInput.addEventListener("change", () => {
+    hideUiWhenIdle = hideUiInput.checked;
+    armIdleUiTimer();
+  });
   previousButton.addEventListener("click", () => setMode(state.mode - 1));
   nextButton.addEventListener("click", () => setMode(state.mode + 1));
   saveButton.addEventListener("click", savePng);
@@ -340,14 +418,15 @@ function wireUi() {
   pauseButton.addEventListener("click", () => {
     state = withRunning(state, !state.running);
     clock = resetClock();
-    ui.syncPlaybackControls(state);
+    ui.syncPlaybackControls(state, showcaseActive);
     scheduleRender();
     ensureAnimationLoop();
   });
 
   cycleButton.addEventListener("click", () => {
+    showcaseActive = false;
     state = withCycle(state, state.cycleMs > 0 ? 0 : cyclePreferenceMs);
-    ui.syncPlaybackControls(state);
+    ui.syncPlaybackControls(state, showcaseActive);
     writeCurrentHash();
     ensureAnimationLoop(true);
   });
@@ -368,7 +447,7 @@ function wireUi() {
   motionSlider.addEventListener("input", () => {
     state = withMotion(state, Number(motionSlider.value), MOTION_MIN, MOTION_MAX);
     ui.setMotionValue(state.motion);
-    ui.syncPlaybackControls(state);
+    ui.syncPlaybackControls(state, showcaseActive);
     writeCurrentHash();
     scheduleRender();
     ensureAnimationLoop(true);
@@ -426,6 +505,12 @@ function wireUi() {
 
   wireCanvasGestures();
 
+  window.addEventListener("pointermove", armIdleUiTimer, { passive: true });
+  window.addEventListener("pointerdown", armIdleUiTimer, { passive: true });
+  window.addEventListener("keydown", armIdleUiTimer);
+  document.addEventListener("fullscreenchange", ui.syncFullscreen);
+  ui.syncFullscreen();
+
   window.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       setPanelOpen(false);
@@ -445,6 +530,7 @@ function wireUi() {
     else if (event.key.toLowerCase() === "s") saveButton.click();
     else if (event.key.toLowerCase() === "c") cycleButton.click();
     else if (event.key.toLowerCase() === "f") settingsButton.click();
+    else if (event.key.toLowerCase() === "g") fullscreenButton.click();
     else if (event.key >= "0" && event.key <= "9") setMode(Number(event.key));
   });
 
@@ -458,7 +544,7 @@ function wireUi() {
     if (!event.matches || !state.running) return;
     state = withRunning(state, false);
     clock = resetClock();
-    ui.syncPlaybackControls(state);
+    ui.syncPlaybackControls(state, showcaseActive);
     scheduleRender();
     ui.showToast("Motion paused");
   });
@@ -467,7 +553,8 @@ function wireUi() {
     const previousPalette = state.palette;
     readHash(location, state, MODES.length, PALETTES.length, MODE_IDS);
     if (state.cycleMs > 0) cyclePreferenceMs = state.cycleMs;
-    ui.applyStateToControls(state, cyclePreferenceMs);
+    showcaseActive = false;
+    ui.applyStateToControls(state, cyclePreferenceMs, showcaseActive);
     if (state.palette !== previousPalette) ui.renderGallery(state.palette);
     state = { ...state, cycleElapsed: 0 };
     ui.setCycleProgress(0);
@@ -478,6 +565,7 @@ function wireUi() {
 
   ui.applyStateToControls(state, cyclePreferenceMs);
   setPanelOpen(!compactControls.matches);
+  armIdleUiTimer();
 }
 
 function setPanelOpen(open: boolean) {

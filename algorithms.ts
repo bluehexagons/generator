@@ -29,6 +29,7 @@ export type RenderMode = {
     palette: number;
   }) => PixelGenerator;
   animationSampleBudget: number;
+  motionScale: number;
 };
 
 function defineMode(
@@ -38,13 +39,23 @@ function defineMode(
   generatePixel: PixelGenerator,
   preparePixel?: PreparedGenerator,
   animationSampleBudget = 180_000,
+  motionScale = 1,
 ): RenderMode {
   const prepare: RenderMode["prepare"] = preparePixel
     ? ({ width, height, seed, palette }) => preparePixel(width, height, seed, palette)
     : ({ width, height, seed, palette }) =>
         (x, y, pixelIndex) =>
           generatePixel(x, y, width, height, seed, pixelIndex, palette);
-  return { id, name, note, generatePixel, preparePixel, prepare, animationSampleBudget };
+  return {
+    id,
+    name,
+    note,
+    generatePixel,
+    preparePixel,
+    prepare,
+    animationSampleBudget,
+    motionScale,
+  };
 }
 
 export const MODES = [
@@ -55,12 +66,16 @@ export const MODES = [
     drift,
     undefined,
     75_000,
+    0.8,
   ),
   defineMode(
     "diagonal-bands",
     "Diagonal Bands",
     "Crossed waves with a bright, shifting seam",
     diagonalBands,
+    undefined,
+    180_000,
+    1.35,
   ),
   defineMode(
     "scanline-sweep",
@@ -90,6 +105,7 @@ export const MODES = [
     skyNoise,
     undefined,
     75_000,
+    0.7,
   ),
   defineMode("twilight", "Twilight", "Warm woven light after the sun drops", twilight),
   defineMode(
@@ -113,6 +129,7 @@ export const MODES = [
     fractalClouds,
     prepareFractalClouds,
     75_000,
+    0.7,
   ),
   defineMode(
     "metaballs",
@@ -120,6 +137,8 @@ export const MODES = [
     "Soft lights that pool together when they meet",
     metaballs,
     prepareMetaballs,
+    180_000,
+    1.25,
   ),
   defineMode(
     "turbulence",
@@ -135,6 +154,7 @@ export const MODES = [
     voronoiGlow,
     prepareVoronoiGlow,
     75_000,
+    0.75,
   ),
   defineMode(
     "julia-field",
@@ -142,6 +162,8 @@ export const MODES = [
     "A Julia set passing in and out of focus",
     juliaField,
     prepareJuliaField,
+    180_000,
+    1.25,
   ),
   defineMode(
     "polar-ribbons",
@@ -149,6 +171,8 @@ export const MODES = [
     "Ribbons wound around the center of the frame",
     polarRibbons,
     preparePolarRibbons,
+    180_000,
+    1.2,
   ),
   defineMode(
     "rgb-oscillator",
@@ -164,6 +188,7 @@ export const MODES = [
     marble,
     prepareMarble,
     75_000,
+    0.22,
   ),
 ];
 

@@ -94,6 +94,8 @@ export function advanceFrame(
   renderIntervalMs: number,
   modeCount: number,
   random = Math.random,
+  motionScale = 1,
+  selectMode?: (currentMode: number) => number,
 ) {
   const elapsed = Number.isFinite(elapsedMs) ? Math.max(0, elapsedMs) : 0;
   const renderElapsed = Number.isFinite(accumulatedRenderMs) ? Math.max(0, accumulatedRenderMs) : 0;
@@ -107,7 +109,11 @@ export function advanceFrame(
     next.cycleElapsed += elapsed;
     if (next.cycleElapsed >= next.cycleMs) {
       const scenesPassed = Math.floor(next.cycleElapsed / next.cycleMs);
-      next.mode = (next.mode + scenesPassed) % modeCount;
+      for (let scene = 0; scene < scenesPassed; scene += 1) {
+        next.mode = selectMode
+          ? wrapMode(selectMode(next.mode), modeCount)
+          : (next.mode + 1) % modeCount;
+      }
       next.seed = normalizeSeed(random());
       next.cycleElapsed %= next.cycleMs;
       sceneChanged = true;
@@ -116,7 +122,9 @@ export function advanceFrame(
 
   const renderRequested = sceneChanged || renderElapsed >= renderInterval;
   if (renderRequested && next.motion !== 0 && !next.scrubbing && renderElapsed > 0) {
-    next.seed = normalizeSeed(next.seed + motionDelta(next.motion) * (renderElapsed / 16));
+    next.seed = normalizeSeed(
+      next.seed + motionDelta(next.motion) * motionScale * (renderElapsed / 16),
+    );
   }
 
   return { state: next, sceneChanged, renderRequested };
