@@ -81,7 +81,7 @@ body::before {
   width: 100vw;
   height: 100dvh;
   cursor: grab;
-  touch-action: none;
+  touch-action: pan-y pinch-zoom;
 }
 
 #transition {
@@ -423,10 +423,47 @@ button.on .button-icon {
 
 .control input[type="range"] {
   width: 100%;
-  height: 5px;
+  height: 32px;
   margin: 0;
-  accent-color: var(--accent-strong);
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
   cursor: ew-resize;
+}
+.control input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(232, 239, 248, 0.22);
+}
+.control input[type="range"]::-webkit-slider-thumb {
+  width: 20px;
+  height: 20px;
+  margin-top: -8px;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 2px solid rgba(244, 247, 251, 0.92);
+  border-radius: 50%;
+  background: var(--accent-strong);
+  box-shadow: 0 0 0 3px rgba(69, 199, 255, 0.16);
+}
+.control input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(232, 239, 248, 0.22);
+}
+.control input[type="range"]::-moz-range-progress {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--accent-strong);
+}
+.control input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(244, 247, 251, 0.92);
+  border-radius: 50%;
+  background: var(--accent-strong);
+  box-shadow: 0 0 0 3px rgba(69, 199, 255, 0.16);
 }
 
 .range-ends {
@@ -482,6 +519,9 @@ button.on .button-icon {
 .gesture-hint span {
   margin-right: 5px;
   color: var(--accent);
+}
+.gesture-touch {
+  display: none;
 }
 .hint {
   margin-top: 11px;
@@ -814,6 +854,26 @@ body.ui-hidden .bottom-deck {
   .top-left {
     width: calc(100vw - 78px);
   }
+
+  .transport {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 4px;
+    padding: 4px 4px 7px;
+  }
+  .transport-buttons {
+    display: contents;
+  }
+  .transport-buttons > button,
+  .transport > button {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 2px;
+  }
+  .transport .button-label {
+    display: none;
+  }
 }
 
 @media (max-width: 300px) {
@@ -834,6 +894,37 @@ body.ui-hidden .bottom-deck {
   }
   .icon-button {
     min-width: 44px;
+  }
+  .control input[type="range"] {
+    height: 44px;
+  }
+  .control input[type="range"]::-webkit-slider-thumb {
+    width: 24px;
+    height: 24px;
+    margin-top: -10px;
+  }
+  .control input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+  }
+  .control select {
+    min-height: 44px;
+  }
+  .toggle-control {
+    min-height: 44px;
+  }
+  .toggle-control input {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+@media (any-pointer: coarse) {
+  .gesture-desktop {
+    display: none;
+  }
+  .gesture-touch {
+    display: inline;
   }
 }
 
