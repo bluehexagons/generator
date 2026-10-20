@@ -11,13 +11,17 @@ The other ten scenes go further into familiar procedural territory: sine-wave pl
 Install the development tools and start Vite:
 
 ```sh
-npm install
+npm ci
 npm run dev
 ```
 
-Open the local URL shown by Vite. The app uses TypeScript modules and the Canvas 2D API, with no runtime dependencies. Node 20.19 or newer is required for the development tools.
+Open the local URL shown by Vite. The app uses TypeScript modules and the Canvas 2D API, with no runtime dependencies. Use Node 24 (`.nvmrc`), matching CI, for development.
+
+Basaltwater on Debian is the reference environment, following the [shared project standards](https://github.com/bluehexagons/basaltwater/blob/main/docs/agents/project-standards.md). Ordinary Node and npm also work on Linux and Windows 11. Use `nvm use` to select the project major, or `basaltw node exec -- npm run check` on Basaltwater without changing the host default.
 
 To create a deployable static site, run `npm run build` and serve the `dist/` directory. You can inspect that build locally with `npm run preview`.
+
+The bundle uses relative asset URLs for root hosting, project subdirectories, and Basaltwater's shared HTTPS gateway. The optional `basaltwater.json` describes the static output and native checks; its CI test stage already builds the site, so it has no duplicate build stage. Validate it with `basaltw manifest validate --json` when that CLI is available. For authorized remote previews, use the shared `basaltwater-web-gateway` skill; no gateway or Basaltwater installation is needed for local development.
 
 To run the type check, Oxlint, Oxfmt check, tests, and production build:
 

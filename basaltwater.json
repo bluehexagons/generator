@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "components": [
+    {
+      "name": "site",
+      "type": "static",
+      "domain": "{{domain}}",
+      "build": ["npm ci", "npm run build"],
+      "output": "dist"
+    }
+  ],
+  "ci": {
+    "install": [{ "argv": ["npm", "ci"] }],
+    "test": [{ "argv": ["npm", "run", "check"] }]
+  }
+}
