@@ -17,14 +17,14 @@
     "check": "npm run typecheck && npm run lint && npm run format:check && npm test && npm run build"
   },
   "devDependencies": {
-    "@types/node": "^26.6.3",
-    "oxfmt": "^0.70.0",
-    "oxlint": "^1.85.0",
+    "@types/node": "^26.6.5",
+    "oxfmt": "^0.74.0",
+    "oxlint": "^1.89.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
-    "vite": "^8.3.1"
+    "vite": "^8.3.5"
   },
   "engines": {
-    "node": ">=20.19"
+    "node": "^24.22.1 || ^26.12.1"
   }
 }
