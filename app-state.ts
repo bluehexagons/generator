@@ -120,8 +120,9 @@ export function advanceFrame(
     }
   }
 
-  const renderRequested = sceneChanged || renderElapsed >= renderInterval;
-  if (renderRequested && next.motion !== 0 && !next.scrubbing && renderElapsed > 0) {
+  const animating = next.motion !== 0 && !next.scrubbing;
+  const renderRequested = sceneChanged || (animating && renderElapsed >= renderInterval);
+  if (renderRequested && animating && renderElapsed > 0) {
     next.seed = normalizeSeed(
       next.seed + motionDelta(next.motion) * motionScale * (renderElapsed / 16),
     );

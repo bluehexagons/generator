@@ -146,11 +146,13 @@ function armIdleUiTimer() {
   }, 4200);
 }
 
-function toggleFullscreen() {
-  const change = document.fullscreenElement
-    ? document.exitFullscreen()
-    : document.documentElement.requestFullscreen();
-  void change.catch(() => ui.showToast("Fullscreen unavailable"));
+async function toggleFullscreen() {
+  try {
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else await document.documentElement.requestFullscreen();
+  } catch {
+    ui.showToast("Fullscreen unavailable");
+  }
 }
 
 function readHideUiPreference() {
@@ -341,6 +343,7 @@ async function copyText(text: string) {
 
 function savePng() {
   const { main } = ui.elements;
+  const { mode, seed, pixelSize, palette } = state;
   const exportCanvas = document.createElement("canvas");
   exportCanvas.width = main.width;
   exportCanvas.height = main.height;
@@ -350,10 +353,10 @@ function savePng() {
     exportContext,
     exportCanvas.width,
     exportCanvas.height,
-    MODES[state.mode],
-    state.seed,
-    state.pixelSize,
-    state.palette,
+    MODES[mode],
+    seed,
+    pixelSize,
+    palette,
   );
   exportCanvas.toBlob((blob) => {
     if (!blob) {
@@ -362,7 +365,7 @@ function savePng() {
     }
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
-    anchor.download = `plasma-${MODES[state.mode].id}-${state.seed.toFixed(4)}.png`;
+    anchor.download = `plasma-${MODES[mode].id}-${seed.toFixed(4)}.png`;
     anchor.href = url;
     document.body.appendChild(anchor);
     anchor.click();

@@ -31,7 +31,7 @@ test("writeHash serializes the shareable state", () => {
     { mode: 4, seed: 0.123456789, pixelSize: 3, palette: 2, motion: -28, cycleMs: 7000 },
   );
 
-  assert.equal(replacement, "#mode=4&seed=0.123457&size=3&palette=2&motion=-28&cycle=7");
+  assert.equal(replacement, "#mode=4&seed=0.123456789&size=3&palette=2&motion=-28&cycle=7");
 });
 
 test("writeHash uses stable scene IDs when supplied", () => {
@@ -49,7 +49,10 @@ test("writeHash uses stable scene IDs when supplied", () => {
     ["gradient", "diagonal-bands", "scanline-sweep", "rgb-quadrants", "radial-fade"],
   );
 
-  assert.equal(replacement, "#mode=radial-fade&seed=0.123457&size=3&palette=2&motion=-28&cycle=7");
+  assert.equal(
+    replacement,
+    "#mode=radial-fade&seed=0.123456789&size=3&palette=2&motion=-28&cycle=7",
+  );
 });
 
 test("parseHash returns a validated partial state without mutating anything", () => {
@@ -75,8 +78,15 @@ test("serializeHash is independent of browser history", () => {
       motion: -28,
       cycleMs: 7000,
     }),
-    "#mode=4&seed=0.123457&size=3&palette=2&motion=-28&cycle=7",
+    "#mode=4&seed=0.123456789&size=3&palette=2&motion=-28&cycle=7",
   );
+});
+
+test("shared seeds round-trip exactly, including near the ends of the unit interval", () => {
+  for (const seed of [0.123456789, 0.9999999, 1e-17]) {
+    const state = { mode: 4, seed, pixelSize: 3, palette: 2, motion: 0, cycleMs: 0 };
+    assert.deepEqual(parseHash(serializeHash(state), 20, 5), state);
+  }
 });
 
 test("readHash validates and clamps values from a deep link", () => {

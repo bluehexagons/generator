@@ -15,7 +15,7 @@ export function serializeHash(state: ShareState, modeIds: string[] = []) {
     ? clampInteger(state.cycleMs / 1000, CYCLE_SECONDS_MIN, CYCLE_SECONDS_MAX)
     : 0;
   const mode = modeIds[state.mode] ?? state.mode;
-  return `#mode=${encodeURIComponent(mode)}&seed=${state.seed.toFixed(6)}&size=${state.pixelSize}&palette=${state.palette}&motion=${motion}&cycle=${cycleSeconds}`;
+  return `#mode=${encodeURIComponent(mode)}&seed=${state.seed}&size=${state.pixelSize}&palette=${state.palette}&motion=${motion}&cycle=${cycleSeconds}`;
 }
 
 export function writeHash(
@@ -39,7 +39,9 @@ function readNumber(params: URLSearchParams, name: string) {
 }
 
 export function normalizeSeed(value: number) {
-  return ((value % 1) + 1) % 1;
+  const remainder = value % 1;
+  if (remainder === 0) return 0;
+  return remainder < 0 ? (remainder + 1) % 1 : remainder;
 }
 
 export function parseHash(

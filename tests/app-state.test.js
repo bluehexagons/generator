@@ -56,6 +56,17 @@ test("advanceFrame reports one render decision while applying cycle and motion t
   assert.equal(result.state.cycleElapsed, 0);
 });
 
+test("a still scene renders only when cycling changes the artwork", () => {
+  const state = { ...createInitialState({ seed: 0.25 }), cycleMs: 3000, motion: 0 };
+  const before = advanceFrame(state, 2500, 40, 1000 / 30, 20);
+  const after = advanceFrame(before.state, 500, 40, 1000 / 30, 20, () => 0.5);
+
+  assert.equal(before.renderRequested, false);
+  assert.equal(before.state.cycleElapsed, 2500);
+  assert.equal(after.renderRequested, true);
+  assert.equal(after.state.mode, 4);
+});
+
 test("playback applies motion only for a render interval and not while scrubbing", () => {
   const state = { ...createInitialState({ seed: 0.25 }), motion: 24 };
   const moved = advancePlayback(state, 0, 32, 20).state;
