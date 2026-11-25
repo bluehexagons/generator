@@ -21,7 +21,7 @@ Basaltwater on Debian is the reference environment, following the [shared projec
 
 To create a deployable static site, run `npm run build` and serve the `dist/` directory. You can inspect that build locally with `npm run preview`.
 
-The Check workflow publishes `dist/` to [GitHub Pages](https://bluehexagons.github.io/generator/) after checks pass on `main`. The repository's Pages source is GitHub Actions.
+The Check workflow publishes `dist/` to [GitHub Pages](https://bluehexagons.github.io/generator/) after checks pass on `main`. Select GitHub Actions as the publishing source in Settings → Pages to disable the branch-based build. To republish the current build, run the Check workflow manually on `main`.
 
 The bundle uses relative asset URLs for root hosting, project subdirectories, and Basaltwater's shared HTTPS gateway. The optional `basaltwater.json` describes the static output and native checks; its CI test stage already builds the site, so it has no duplicate build stage. Validate it with `basaltw manifest validate --json` when that CLI is available. For authorized remote previews, use the shared `basaltwater-web-gateway` skill; no gateway or Basaltwater installation is needed for local development.
 
