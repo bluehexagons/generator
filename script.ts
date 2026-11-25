@@ -141,8 +141,10 @@ function armIdleUiTimer() {
   idleUiTimer = window.setTimeout(() => {
     const activeElement = document.activeElement;
     const focusIsInUi =
-      activeElement instanceof HTMLElement && activeElement.closest(".top-bar, .bottom-deck");
-    if (!focusIsInUi) document.body.classList.add("ui-hidden");
+      activeElement instanceof HTMLElement &&
+      activeElement.closest(".top-bar, .bottom-deck, #panel-right");
+    const modalIsOpen = ui.elements.panel.getAttribute("aria-modal") === "true";
+    if (!focusIsInUi && !modalIsOpen) document.body.classList.add("ui-hidden");
   }, 4200);
 }
 
@@ -245,6 +247,8 @@ function randomizeSeed() {
 
 function wireCanvasGestures() {
   const { main } = ui.elements;
+  const tapRadius = (pointerType: string) => (pointerType === "touch" ? 18 : 7);
+  const scrubSeed = (seed: number, dx: number) => seed + dx / Math.max(240, main.clientWidth);
   let gesture: {
     id: number;
     type: string;
@@ -273,11 +277,11 @@ function wireCanvasGestures() {
     if (!gesture || gesture.id !== event.pointerId) return;
     const dx = event.clientX - gesture.x;
     const dy = event.clientY - gesture.y;
-    gesture.moved ||= Math.hypot(dx, dy) > (gesture.type === "touch" ? 14 : 7);
+    gesture.moved ||= Math.hypot(dx, dy) > tapRadius(gesture.type);
     if (gesture.type !== "touch" && gesture.moved) {
       state = {
         ...state,
-        seed: normalizeSeed(gesture.seed + dx / Math.max(240, main.clientWidth)),
+        seed: normalizeSeed(scrubSeed(gesture.seed, dx)),
       };
       scheduleRender();
     }
@@ -292,23 +296,19 @@ function wireCanvasGestures() {
       wasTouch &&
       Math.abs(dx) > Math.max(52, main.clientWidth * 0.12) &&
       Math.abs(dx) > Math.abs(dy) * 1.25;
-    const isTap = Math.hypot(dx, dy) <= (wasTouch ? 18 : 7);
+    const isTap = !gesture.moved && Math.hypot(dx, dy) <= tapRadius(gesture.type);
 
     state = { ...state, scrubbing: false };
     main.classList.remove("is-scrubbing");
     if (isSwipe) setMode(state.mode + (dx < 0 ? 1 : -1));
     else if (isTap) randomizeSeed();
-    else if (!wasTouch) {
-      writeCurrentHash();
-      ui.showToast(`Seed ${state.seed.toFixed(4)}`);
-    }
+    else if (!wasTouch) setSeed(scrubSeed(gesture.seed, dx), true);
     gesture = null;
     scheduleRender();
     ensureAnimationLoop(true);
   };
 
-  main.addEventListener("pointerup", finishGesture);
-  main.addEventListener("pointercancel", (event) => {
+  const cancelGesture = (event: PointerEvent) => {
     if (!gesture || gesture.id !== event.pointerId) return;
     state = { ...state, scrubbing: false };
     main.classList.remove("is-scrubbing");
@@ -316,7 +316,11 @@ function wireCanvasGestures() {
     gesture = null;
     scheduleRender();
     ensureAnimationLoop(true);
-  });
+  };
+
+  main.addEventListener("pointerup", finishGesture);
+  main.addEventListener("pointercancel", cancelGesture);
+  main.addEventListener("lostpointercapture", cancelGesture);
 }
 
 async function copyText(text: string) {
@@ -554,6 +558,7 @@ function wireUi() {
   window.addEventListener("pointermove", armIdleUiTimer, { passive: true });
   window.addEventListener("pointerdown", armIdleUiTimer, { passive: true });
   window.addEventListener("keydown", armIdleUiTimer);
+  window.addEventListener("focusout", armIdleUiTimer);
   document.addEventListener("fullscreenchange", ui.syncFullscreen);
   ui.syncFullscreen();
 
@@ -573,6 +578,10 @@ function wireUi() {
     const target = event.target;
     if (target instanceof Element && target.closest("input, select, textarea, [contenteditable]"))
       return;
+    if (panel.getAttribute("aria-modal") === "true") {
+      if (event.key.toLowerCase() === "f") setPanelOpen(false);
+      return;
+    }
     if (target instanceof Element && target.closest("button") && [" ", "Enter"].includes(event.key))
       return;
     if (event.key === " ") {

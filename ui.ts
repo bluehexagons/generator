@@ -207,12 +207,12 @@ export function createUi(
 
   function updateGallerySelection(mode: number, scroll = false) {
     let active: HTMLElement | undefined;
-    for (const element of elements.gallery.children) {
-      const selected = Number((element as HTMLElement).dataset.idx) === mode;
-      element.classList.toggle("active", selected);
-      element.setAttribute("aria-pressed", String(selected));
-      (element as HTMLButtonElement).tabIndex = selected ? 0 : -1;
-      if (selected) active = element as HTMLElement;
+    for (const button of elements.gallery.querySelectorAll<HTMLButtonElement>(".thumb")) {
+      const selected = Number(button.dataset.idx) === mode;
+      button.classList.toggle("active", selected);
+      button.setAttribute("aria-pressed", String(selected));
+      button.tabIndex = selected ? 0 : -1;
+      if (selected) active = button;
     }
     if (scroll && active) {
       active.scrollIntoView({
@@ -241,6 +241,7 @@ export function createUi(
     }
 
     elements.panel.classList.toggle("open", open);
+    elements.panel.inert = !open;
     elements.panel.setAttribute("aria-hidden", String(!open));
     if (modal) {
       elements.panel.setAttribute("role", "dialog");
